@@ -1,27 +1,3 @@
-/*global
-	QUnit: true,
-	q: true,
-	t: true,
-	url: true,
-	createWithFriesXML: true,
-	Sizzle: true,
-	module: true,
-	test: true,
-	asyncTest: true,
-	expect: true,
-	stop: true,
-	start: true,
-	ok: true,
-	equal: true,
-	notEqual: true,
-	deepEqual: true,
-	notDeepEqual: true,
-	strictEqual: true,
-	notStrictEqual: true,
-	raises: true,
-	moduleTeardown: true
-*/
-
 module("utilities", { teardown: moduleTeardown });
 
 test("Sizzle.contains", function() {
@@ -49,6 +25,23 @@ test("Sizzle.contains", function() {
 	ok( Sizzle.contains(document, element), "document container (positive)" );
 	ok( !Sizzle.contains(document, detached), "document container (negative)" );
 });
+
+if ( jQuery("<svg xmlns='http://www.w3.org/2000/svg' version='1.1' height='1' width='1'><g/></svg>")[0].firstChild ) {
+	test("Sizzle.contains in SVG (jQuery #10832)", function() {
+		expect( 4 );
+
+		var svg = jQuery(
+			"<svg xmlns='http://www.w3.org/2000/svg' version='1.1' height='1' width='1'>" +
+				"<g><circle cx='1' cy='1' r='1' /></g>" +
+			"</svg>"
+		).appendTo("#qunit-fixture")[0];
+
+		ok( Sizzle.contains( svg, svg.firstChild ), "root child" );
+		ok( Sizzle.contains( svg.firstChild, svg.firstChild.firstChild ), "element child" );
+		ok( Sizzle.contains( svg, svg.firstChild.firstChild ), "root granchild" );
+		ok( !Sizzle.contains( svg.firstChild.firstChild, svg.firstChild ), "parent (negative)" );
+	});
+}
 
 test("Sizzle.uniqueSort", function() {
 	expect( 10 );

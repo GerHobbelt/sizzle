@@ -2,8 +2,6 @@
  * Performance test suite using benchmark.js
  */
 
-/*global console: true*/
-
 define([ "require", "benchmark.js/benchmark", "domReady!", "text!selectors.css", "data/checkJava" ],
 function( require, Benchmark, document, selectors ) {
 
@@ -50,9 +48,6 @@ function( require, Benchmark, document, selectors ) {
 		// Benchmark options
 		maxTime = 0.5,
 		minSamples = 3,
-
-		// Queue for benchmark suites
-		suites = [],
 
 		// Keep track of all iframes
 		iframes = {},
@@ -129,18 +124,6 @@ function( require, Benchmark, document, selectors ) {
 	 */
 	function get( id ) {
 		return document.getElementById( id );
-	}
-
-	/**
-	 * Returns whether the element has the given class
-	 *
-	 * @private
-	 * @param {Element} elem The element to check
-	 * @param {String} classStr The className property is scanned for this class
-	 */
-	function hasClass( elem, classStr ) {
-		return elem && classStr &&
-			(" " + elem.className + " ").indexOf( " " + classStr + " " ) > -1;
 	}
 
 	/**
@@ -391,7 +374,7 @@ function( require, Benchmark, document, selectors ) {
 	 * @param {String} selector Selector to test
 	 */
 	function testSelector( selector ) {
-		var engine, len,
+		var engine,
 			suite = Benchmark.Suite( selector ),
 			name = suite.name,
 			count = numEngines;
@@ -420,11 +403,11 @@ function( require, Benchmark, document, selectors ) {
 
 	/**
 	 * Adds the bench to the list of failures to indicate
-	 *   failture on cycle. Aborts and returns false.
+	 *   failure on cycle. Aborts and returns false.
 	 *
 	 * @param {Object} event Benchmark.Event instance
 	 */
-	function onError( event ) {
+	function onError() {
 		errors[ this.id ] = true;
 		this.abort();
 		return false;
@@ -434,7 +417,7 @@ function( require, Benchmark, document, selectors ) {
 	 * Callback for the start of each test
 	 * Adds the `pending` class to the selector column
 	 */
-	function onStart( event ) {
+	function onStart() {
 		profile( selectors[selectorIndex] );
 		var selectorElem = get( "selector" + selectorIndex );
 		addClass( selectorElem, "pending" );

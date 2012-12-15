@@ -1,27 +1,3 @@
-/*global
-	QUnit: true,
-	q: true,
-	t: true,
-	url: true,
-	createWithFriesXML: true,
-	Sizzle: true,
-	module: true,
-	test: true,
-	asyncTest: true,
-	expect: true,
-	stop: true,
-	start: true,
-	ok: true,
-	equal: true,
-	notEqual: true,
-	deepEqual: true,
-	notDeepEqual: true,
-	strictEqual: true,
-	notStrictEqual: true,
-	raises: true,
-	moduleTeardown: true
-*/
-
 module("selector", { teardown: moduleTeardown });
 
 // #### NOTE: ####
@@ -101,8 +77,8 @@ test("element", function() {
 	t( "Trailing line feed", "#qunit-fixture p\n", ["firstp","ap","sndp","en","sap","first"] );
 	t( "Trailing form feed", "#qunit-fixture p\f", ["firstp","ap","sndp","en","sap","first"] );
 
-	t( "Parent Element", "div p", ["firstp","ap","sndp","en","sap","first"] );
-	t( "Parent Element (non-space descendant combinator)", "div\tp", ["firstp","ap","sndp","en","sap","first"] );
+	t( "Parent Element", "dl ol", ["empty", "listWithTabIndex"] );
+	t( "Parent Element (non-space descendant combinator)", "dl\tol", ["empty", "listWithTabIndex"] );
 	var obj1 = document.getElementById("object1");
 	equal( Sizzle("param", obj1).length, 2, "Object/param as context" );
 
@@ -168,10 +144,14 @@ test("XML Document Selectors", function() {
 });
 
 test("broken", function() {
-	expect( 22 );
+	expect( 26 );
 
 	function broken( name, selector ) {
 		raises(function() {
+			// Setting context to null here somehow avoids QUnit's window.error handling
+			// making the e & e.message correct
+			// For whatever reason, without this,
+			// Sizzle.error will be called but no error will be seen in oldIE
 			Sizzle.call( null, selector );
 		}, function( e ) {
 			return e.message.indexOf("Syntax error") >= 0;
@@ -206,9 +186,13 @@ test("broken", function() {
 	broken( "First-child", ":first-child(n)" );
 	broken( "Last-child", ":last-child(n)" );
 	broken( "Only-child", ":only-child(n)" );
+	broken( "Nth-last-last-child", ":nth-last-last-child(1)" );
+	broken( "First-last-child", ":first-last-child" );
+	broken( "Last-last-child", ":last-last-child" );
+	broken( "Only-last-child", ":only-last-child" );
 
 	// Make sure attribute value quoting works correctly. See: #6093
-	var attrbad = jQuery('<input type="hidden" value="2" name="foo.baz" id="attrbad1"/><input type="hidden" value="2" name="foo[baz]" id="attrbad2"/>').appendTo("body");
+	var attrbad = jQuery("<input type=\"hidden\" value=\"2\" name=\"foo.baz\" id=\"attrbad1\"/><input type=\"hidden\" value=\"2\" name=\"foo[baz]\" id=\"attrbad2\"/>").appendTo("body");
 
 	broken( "Attribute not escaped", "input[name=foo.baz]", [] );
 	// Shouldn't be matching those inner brackets
@@ -250,7 +234,7 @@ test("id", function() {
 	t( "All Children of ID with no children", "#firstUL > *", [] );
 
 	var a = jQuery("<div><a name=\"tName1\">tName1 A</a><a name=\"tName2\">tName2 A</a><div id=\"tName1\">tName1 Div</div></div>").appendTo("#qunit-fixture");
-	equal( Sizzle("#tName1")[0].id, 'tName1', "ID selector with same value for a name attribute" );
+	equal( Sizzle("#tName1")[0].id, "tName1", "ID selector with same value for a name attribute" );
 	equal( Sizzle("#tName2").length, 0, "ID selector non-existing but name attribute on an A tag" );
 	a.remove();
 
@@ -264,7 +248,7 @@ test("id", function() {
 	deepEqual( Sizzle("div#form", document.body), [], "ID selector within the context of another element" );
 
 	t( "Underscore ID", "#types_all", ["types_all"] );
-	t( "Dash ID", "#fx-queue", ["fx-queue"] );
+	t( "Dash ID", "#qunit-fixture", ["qunit-fixture"] );
 
 	t( "ID with weird characters in it", "#name\\+value", ["name+value"] );
 });
@@ -317,10 +301,10 @@ test("name", function() {
 
 	t( "Name selector", "input[name=action]", ["text1"] );
 	t( "Name selector with single quotes", "input[name='action']", ["text1"] );
-	t( "Name selector with double quotes", 'input[name="action"]', ["text1"] );
+	t( "Name selector with double quotes", "input[name=\"action\"]", ["text1"] );
 
-	t( "Name selector non-input", "[name=test]", ["length", "fx-queue"] );
-	t( "Name selector non-input", "[name=div]", ["fadein"] );
+	t( "Name selector non-input", "[name=example]", ["name-is-example"] );
+	t( "Name selector non-input", "[name=div]", ["name-is-div"] );
 	t( "Name selector non-input", "*[name=iframe]", ["iframe"] );
 
 	t( "Name selector for grouped input", "input[name='types[]']", ["types_all", "types_anime", "types_movie"] );
@@ -350,12 +334,12 @@ test("name", function() {
 test("multiple", function() {
 	expect(6);
 
-	t( "Comma Support", "h2, #qunit-fixture p", ["qunit-banner","qunit-userAgent","firstp","ap","sndp","en","sap","first"]);
-	t( "Comma Support", "h2 , #qunit-fixture p", ["qunit-banner","qunit-userAgent","firstp","ap","sndp","en","sap","first"]);
-	t( "Comma Support", "h2 , #qunit-fixture p", ["qunit-banner","qunit-userAgent","firstp","ap","sndp","en","sap","first"]);
-	t( "Comma Support", "h2,#qunit-fixture p", ["qunit-banner","qunit-userAgent","firstp","ap","sndp","en","sap","first"]);
-	t( "Comma Support", "h2,#qunit-fixture p ", ["qunit-banner","qunit-userAgent","firstp","ap","sndp","en","sap","first"]);
-	t( "Comma Support", "h2\t,\r#qunit-fixture p\n", ["qunit-banner","qunit-userAgent","firstp","ap","sndp","en","sap","first"]);
+	t( "Comma Support", "h2, #qunit-fixture p", ["qunit-banner","qunit-userAgent","firstp","ap","sndp","en","sap","first"] );
+	t( "Comma Support", "h2 , #qunit-fixture p", ["qunit-banner","qunit-userAgent","firstp","ap","sndp","en","sap","first"] );
+	t( "Comma Support", "h2 , #qunit-fixture p", ["qunit-banner","qunit-userAgent","firstp","ap","sndp","en","sap","first"] );
+	t( "Comma Support", "h2,#qunit-fixture p", ["qunit-banner","qunit-userAgent","firstp","ap","sndp","en","sap","first"] );
+	t( "Comma Support", "h2,#qunit-fixture p ", ["qunit-banner","qunit-userAgent","firstp","ap","sndp","en","sap","first"] );
+	t( "Comma Support", "h2\t,\r#qunit-fixture p\n", ["qunit-banner","qunit-userAgent","firstp","ap","sndp","en","sap","first"] );
 });
 
 test("child and adjacent", function() {
@@ -377,7 +361,7 @@ test("child and adjacent", function() {
 	t( "Adjacent", "p[lang=en] + p", ["sap"] );
 	t( "Adjacent", "a.GROUPS + code + a", ["mark"] );
 	t( "Comma, Child, and Adjacent", "#qunit-fixture a + a, code > a", ["groups","anchor1","anchor2"] );
-	t( "Element Preceded By", "#qunit-fixture p ~ div", ["foo", "moretests","tabindex-tests", "liveHandlerOrder", "siblingTest"] );
+	t( "Element Preceded By", "#qunit-fixture p ~ div", ["foo", "nothiddendiv", "moretests","tabindex-tests", "liveHandlerOrder", "siblingTest"] );
 	t( "Element Preceded By", "#first ~ div", ["moretests","tabindex-tests", "liveHandlerOrder", "siblingTest"] );
 	t( "Element Preceded By", "#groups ~ a", ["mark"] );
 	t( "Element Preceded By", "#length ~ input", ["idTest"] );
@@ -453,9 +437,9 @@ test("attributes", function() {
 	t( "Attribute containing []", "input[name*='foo[bar]']", ["hidden2"] );
 
 	deepEqual( Sizzle( "input[data-comma='0,1']" ), [ document.getElementById("el12087") ], "Without context, single-quoted attribute containing ','" );
-	deepEqual( Sizzle( 'input[data-comma="0,1"]' ), [ document.getElementById("el12087") ], "Without context, double-quoted attribute containing ','" );
+	deepEqual( Sizzle( "input[data-comma=\"0,1\"]" ), [ document.getElementById("el12087") ], "Without context, double-quoted attribute containing ','" );
 	deepEqual( Sizzle( "input[data-comma='0,1']", document.getElementById("t12087") ), [ document.getElementById("el12087") ], "With context, single-quoted attribute containing ','" );
-	deepEqual( Sizzle( 'input[data-comma="0,1"]', document.getElementById("t12087") ), [ document.getElementById("el12087") ], "With context, double-quoted attribute containing ','" );
+	deepEqual( Sizzle( "input[data-comma=\"0,1\"]", document.getElementById("t12087") ), [ document.getElementById("el12087") ], "With context, double-quoted attribute containing ','" );
 
 	t( "Multiple Attribute Equals", "#form input[type='radio'], #form input[type='hidden']", ["radio1", "radio2", "hidden1"] );
 	t( "Multiple Attribute Equals", "#form input[type='radio'], #form input[type=\"hidden\"]", ["radio1", "radio2", "hidden1"] );
@@ -531,63 +515,137 @@ test("attributes", function() {
 	div = null;
 });
 
-test("pseudo - child", function() {
-	expect( 43 );
-	t( "First Child", "#qunit-fixture p:first-child", ["firstp","sndp"] );
-	t( "First Child (case-insensitive)", "#qunit-fixture p:FIRST-CHILD", ["firstp","sndp"] );
-	t( "Last Child", "p:last-child", ["sap"] );
-	t( "Only Child", "#qunit-fixture a:only-child", ["simon1","anchor1","yahoo","anchor2","liveLink1","liveLink2"] );
+test("pseudo - (parent|empty)", function() {
+	expect( 3 );
 	t( "Empty", "ul:empty", ["firstUL"] );
 	t( "Empty with comment node", "ol:empty", ["empty"] );
 	t( "Is A Parent", "#qunit-fixture p:parent", ["firstp","ap","sndp","en","sap","first"] );
+});
+
+test("pseudo - (first|last|only)-(child|of-type)", function() {
+	expect( 12 );
 
 	t( "First Child", "p:first-child", ["firstp","sndp"] );
-	t( "First Child", ".nothiddendiv div:first-child", ["nothiddendivchild"] );
-	t( "Nth Child", "p:nth-child(1)", ["firstp","sndp"] );
-	t( "Nth Child With Whitespace", "p:nth-child( 1 )", ["firstp","sndp"] );
-	t( "Not Nth Child", "#qunit-fixture p:not(:nth-child(1))", ["ap","en","sap","first"] );
-
-	// Verify that the child position isn't being cached improperly
-	var firstChildren = jQuery("p:first-child").before("<div></div>");
-
-	t( "No longer First Child", "p:nth-child(1)", [] );
-	firstChildren.prev().remove();
-	t( "Restored First Child", "p:nth-child(1)", ["firstp","sndp"] );
-
-	QUnit.reset();
+	t( "First Child (leading id)", "#qunit-fixture p:first-child", ["firstp","sndp"] );
+	t( "First Child (leading class)", ".nothiddendiv div:first-child", ["nothiddendivchild"] );
+	t( "First Child (case-insensitive)", "#qunit-fixture p:FIRST-CHILD", ["firstp","sndp"] );
 
 	t( "Last Child", "p:last-child", ["sap"] );
-	t( "Last Child", "#qunit-fixture a:last-child", ["simon1","anchor1","mark","yahoo","anchor2","simon","liveLink1","liveLink2"] );
+	t( "Last Child (leading id)", "#qunit-fixture a:last-child", ["simon1","anchor1","mark","yahoo","anchor2","simon","liveLink1","liveLink2"] );
 
-	t( "Nth-child", "#qunit-fixture form#form > *:nth-child(2)", ["text1"] );
-	t( "Nth-child", "#qunit-fixture form#form > :nth-child(2)", ["text1"] );
+	t( "Only Child", "#qunit-fixture a:only-child", ["simon1","anchor1","yahoo","anchor2","liveLink1","liveLink2"] );
 
-	t( "Nth-child", "#form select:first option:nth-child(-1)", [] );
-	t( "Nth-child", "#form select:first option:nth-child(3)", ["option1c"] );
-	t( "Nth-child(case-insensitive)", "#form select:first option:NTH-child(3)", ["option1c"] );
-	t( "Nth-child", "#form select:first option:nth-child(0n+3)", ["option1c"] );
-	t( "Nth-child", "#form select:first option:nth-child(1n+0)", ["option1a", "option1b", "option1c", "option1d"] );
-	t( "Nth-child", "#form select:first option:nth-child(1n)", ["option1a", "option1b", "option1c", "option1d"] );
-	t( "Nth-child", "#form select:first option:nth-child(n)", ["option1a", "option1b", "option1c", "option1d"] );
-	t( "Nth-child", "#form select:first option:nth-child(even)", ["option1b", "option1d"] );
-	t( "Nth-child", "#form select:first option:nth-child(odd)", ["option1a", "option1c"] );
-	t( "Nth-child", "#form select:first option:nth-child(2n)", ["option1b", "option1d"] );
-	t( "Nth-child", "#form select:first option:nth-child(2n+1)", ["option1a", "option1c"] );
-	t( "Nth-child", "#form select:first option:nth-child(2n + 1)", ["option1a", "option1c"] );
-	t( "Nth-child", "#form select:first option:nth-child(+2n + 1)", ["option1a", "option1c"] );
-	t( "Nth-child", "#form select:first option:nth-child(3n)", ["option1c"] );
-	t( "Nth-child", "#form select:first option:nth-child(3n+1)", ["option1a", "option1d"] );
-	t( "Nth-child", "#form select:first option:nth-child(3n+2)", ["option1b"] );
-	t( "Nth-child", "#form select:first option:nth-child(3n+3)", ["option1c"] );
-	t( "Nth-child", "#form select:first option:nth-child(3n-1)", ["option1b"] );
-	t( "Nth-child", "#form select:first option:nth-child(3n-2)", ["option1a", "option1d"] );
-	t( "Nth-child", "#form select:first option:nth-child(3n-3)", ["option1c"] );
-	t( "Nth-child", "#form select:first option:nth-child(3n+0)", ["option1c"] );
-	t( "Nth-child", "#form select:first option:nth-child(-1n+3)", ["option1a", "option1b", "option1c"] );
-	t( "Nth-child", "#form select:first option:nth-child(-n+3)", ["option1a", "option1b", "option1c"] );
-	t( "Nth-child", "#form select:first option:nth-child(-1n + 3)", ["option1a", "option1b", "option1c"] );
+	t( "First-of-type", "#qunit-fixture > p:first-of-type", ["firstp"] );
+	t( "Last-of-type", "#qunit-fixture > p:last-of-type", ["first"] );
+	t( "Only-of-type", "#qunit-fixture > :only-of-type", ["name+value", "firstUL", "empty", "floatTest", "iframe", "table"] );
 
-	deepEqual( Sizzle( ":nth-child(n)", null, null, jQuery("<a></a>").add("#ap") ), q("ap"), "Seeded nth-child" );
+	// Verify that the child position isn't being cached improperly
+	var secondChildren = jQuery("p:nth-child(2)").before("<div></div>");
+
+	t( "No longer second child", "p:nth-child(2)", [] );
+	secondChildren.prev().remove();
+	t( "Restored second child", "p:nth-child(2)", ["ap","en"] );
+});
+
+test("pseudo - nth-child", function() {
+	expect( 30 );
+
+	t( "Nth-child", "p:nth-child(1)", ["firstp","sndp"] );
+	t( "Nth-child (with whitespace)", "p:nth-child( 1 )", ["firstp","sndp"] );
+	t( "Nth-child (case-insensitive)", "#form select:first option:NTH-child(3)", ["option1c"] );
+	t( "Not nth-child", "#qunit-fixture p:not(:nth-child(1))", ["ap","en","sap","first"] );
+
+	t( "Nth-child(2)", "#qunit-fixture form#form > *:nth-child(2)", ["text1"] );
+	t( "Nth-child(2)", "#qunit-fixture form#form > :nth-child(2)", ["text1"] );
+
+	t( "Nth-child(-1)", "#form select:first option:nth-child(-1)", [] );
+	t( "Nth-child(3)", "#form select:first option:nth-child(3)", ["option1c"] );
+	t( "Nth-child(0n+3)", "#form select:first option:nth-child(0n+3)", ["option1c"] );
+	t( "Nth-child(1n+0)", "#form select:first option:nth-child(1n+0)", ["option1a", "option1b", "option1c", "option1d"] );
+	t( "Nth-child(1n)", "#form select:first option:nth-child(1n)", ["option1a", "option1b", "option1c", "option1d"] );
+	t( "Nth-child(n)", "#form select:first option:nth-child(n)", ["option1a", "option1b", "option1c", "option1d"] );
+	t( "Nth-child(even)", "#form select:first option:nth-child(even)", ["option1b", "option1d"] );
+	t( "Nth-child(odd)", "#form select:first option:nth-child(odd)", ["option1a", "option1c"] );
+	t( "Nth-child(2n)", "#form select:first option:nth-child(2n)", ["option1b", "option1d"] );
+	t( "Nth-child(2n+1)", "#form select:first option:nth-child(2n+1)", ["option1a", "option1c"] );
+	t( "Nth-child(2n + 1)", "#form select:first option:nth-child(2n + 1)", ["option1a", "option1c"] );
+	t( "Nth-child(+2n + 1)", "#form select:first option:nth-child(+2n + 1)", ["option1a", "option1c"] );
+	t( "Nth-child(3n)", "#form select:first option:nth-child(3n)", ["option1c"] );
+	t( "Nth-child(3n+1)", "#form select:first option:nth-child(3n+1)", ["option1a", "option1d"] );
+	t( "Nth-child(3n+2)", "#form select:first option:nth-child(3n+2)", ["option1b"] );
+	t( "Nth-child(3n+3)", "#form select:first option:nth-child(3n+3)", ["option1c"] );
+	t( "Nth-child(3n-1)", "#form select:first option:nth-child(3n-1)", ["option1b"] );
+	t( "Nth-child(3n-2)", "#form select:first option:nth-child(3n-2)", ["option1a", "option1d"] );
+	t( "Nth-child(3n-3)", "#form select:first option:nth-child(3n-3)", ["option1c"] );
+	t( "Nth-child(3n+0)", "#form select:first option:nth-child(3n+0)", ["option1c"] );
+	t( "Nth-child(-1n+3)", "#form select:first option:nth-child(-1n+3)", ["option1a", "option1b", "option1c"] );
+	t( "Nth-child(-n+3)", "#form select:first option:nth-child(-n+3)", ["option1a", "option1b", "option1c"] );
+	t( "Nth-child(-1n + 3)", "#form select:first option:nth-child(-1n + 3)", ["option1a", "option1b", "option1c"] );
+
+	deepEqual( Sizzle( ":nth-child(n)", null, null, [ document.createElement("a") ].concat( q("ap") ) ), q("ap"), "Seeded nth-child" );
+});
+
+test("pseudo - nth-last-child", function() {
+	expect( 30 );
+
+	t( "Nth-last-child", "form:nth-last-child(5)", ["testForm"] );
+	t( "Nth-last-child (with whitespace)", "form:nth-last-child( 5 )", ["testForm"] );
+	t( "Nth-last-child (case-insensitive)", "#form select:first option:NTH-last-child(3)", ["option1b"] );
+	t( "Not nth-last-child", "#qunit-fixture p:not(:nth-last-child(1))", ["firstp", "ap", "sndp", "en", "first"] );
+
+	t( "Nth-last-child(-1)", "#form select:first option:nth-last-child(-1)", [] );
+	t( "Nth-last-child(3)", "#form select:first :nth-last-child(3)", ["option1b"] );
+	t( "Nth-last-child(3)", "#form select:first *:nth-last-child(3)", ["option1b"] );
+	t( "Nth-last-child(3)", "#form select:first option:nth-last-child(3)", ["option1b"] );
+	t( "Nth-last-child(0n+3)", "#form select:first option:nth-last-child(0n+3)", ["option1b"] );
+	t( "Nth-last-child(1n+0)", "#form select:first option:nth-last-child(1n+0)", ["option1a", "option1b", "option1c", "option1d"] );
+	t( "Nth-last-child(1n)", "#form select:first option:nth-last-child(1n)", ["option1a", "option1b", "option1c", "option1d"] );
+	t( "Nth-last-child(n)", "#form select:first option:nth-last-child(n)", ["option1a", "option1b", "option1c", "option1d"] );
+	t( "Nth-last-child(even)", "#form select:first option:nth-last-child(even)", ["option1a", "option1c"] );
+	t( "Nth-last-child(odd)", "#form select:first option:nth-last-child(odd)", ["option1b", "option1d"] );
+	t( "Nth-last-child(2n)", "#form select:first option:nth-last-child(2n)", ["option1a", "option1c"] );
+	t( "Nth-last-child(2n+1)", "#form select:first option:nth-last-child(2n+1)", ["option1b", "option1d"] );
+	t( "Nth-last-child(2n + 1)", "#form select:first option:nth-last-child(2n + 1)", ["option1b", "option1d"] );
+	t( "Nth-last-child(+2n + 1)", "#form select:first option:nth-last-child(+2n + 1)", ["option1b", "option1d"] );
+	t( "Nth-last-child(3n)", "#form select:first option:nth-last-child(3n)", ["option1b"] );
+	t( "Nth-last-child(3n+1)", "#form select:first option:nth-last-child(3n+1)", ["option1a", "option1d"] );
+	t( "Nth-last-child(3n+2)", "#form select:first option:nth-last-child(3n+2)", ["option1c"] );
+	t( "Nth-last-child(3n+3)", "#form select:first option:nth-last-child(3n+3)", ["option1b"] );
+	t( "Nth-last-child(3n-1)", "#form select:first option:nth-last-child(3n-1)", ["option1c"] );
+	t( "Nth-last-child(3n-2)", "#form select:first option:nth-last-child(3n-2)", ["option1a", "option1d"] );
+	t( "Nth-last-child(3n-3)", "#form select:first option:nth-last-child(3n-3)", ["option1b"] );
+	t( "Nth-last-child(3n+0)", "#form select:first option:nth-last-child(3n+0)", ["option1b"] );
+	t( "Nth-last-child(-1n+3)", "#form select:first option:nth-last-child(-1n+3)", ["option1b", "option1c", "option1d"] );
+	t( "Nth-last-child(-n+3)", "#form select:first option:nth-last-child(-n+3)", ["option1b", "option1c", "option1d"] );
+	t( "Nth-last-child(-1n + 3)", "#form select:first option:nth-last-child(-1n + 3)", ["option1b", "option1c", "option1d"] );
+
+	deepEqual( Sizzle( ":nth-last-child(n)", null, null, [ document.createElement("a") ].concat( q("ap") ) ), q("ap"), "Seeded nth-last-child" );
+});
+
+test("pseudo - nth-of-type", function() {
+	expect( 9 );
+	t( "Nth-of-type(-1)", ":nth-of-type(-1)", [] );
+	t( "Nth-of-type(3)", "#ap :nth-of-type(3)", ["mark"] );
+	t( "Nth-of-type(n)", "#ap :nth-of-type(n)", ["google", "groups", "code1", "anchor1", "mark"] );
+	t( "Nth-of-type(0n+3)", "#ap :nth-of-type(0n+3)", ["mark"] );
+	t( "Nth-of-type(2n)", "#ap :nth-of-type(2n)", ["groups"] );
+	t( "Nth-of-type(even)", "#ap :nth-of-type(even)", ["groups"] );
+	t( "Nth-of-type(2n+1)", "#ap :nth-of-type(2n+1)", ["google", "code1", "anchor1", "mark"] );
+	t( "Nth-of-type(odd)", "#ap :nth-of-type(odd)", ["google", "code1", "anchor1", "mark"] );
+	t( "Nth-of-type(-n+2)", "#qunit-fixture > :nth-of-type(-n+2)", ["firstp", "ap", "foo", "nothiddendiv", "name+value", "firstUL", "empty", "form", "floatTest", "iframe", "lengthtest", "table"] );
+});
+
+test("pseudo - nth-last-of-type", function() {
+	expect( 9 );
+	t( "Nth-last-of-type(-1)", ":nth-last-of-type(-1)", [] );
+	t( "Nth-last-of-type(3)", "#ap :nth-last-of-type(3)", ["google"] );
+	t( "Nth-last-of-type(n)", "#ap :nth-last-of-type(n)", ["google", "groups", "code1", "anchor1", "mark"] );
+	t( "Nth-last-of-type(0n+3)", "#ap :nth-last-of-type(0n+3)", ["google"] );
+	t( "Nth-last-of-type(2n)", "#ap :nth-last-of-type(2n)", ["groups"] );
+	t( "Nth-last-of-type(even)", "#ap :nth-last-of-type(even)", ["groups"] );
+	t( "Nth-last-of-type(2n+1)", "#ap :nth-last-of-type(2n+1)", ["google", "code1", "anchor1", "mark"] );
+	t( "Nth-last-of-type(odd)", "#ap :nth-last-of-type(odd)", ["google", "code1", "anchor1", "mark"] );
+	t( "Nth-last-of-type(-n+2)", "#qunit-fixture > :nth-last-of-type(-n+2)", ["ap", "name+value", "first", "firstUL", "empty", "floatTest", "iframe", "table", "name-tests", "testForm", "liveHandlerOrder", "siblingTest"] );
 });
 
 test("pseudo - misc", function() {
@@ -767,7 +825,7 @@ test("pseudo - :not", function() {
 	t( ":not() Multiple Class", "#foo a:not(.link)", ["yahoo", "anchor2"] );
 	t( ":not() Multiple Class", "#foo a:not(.blog.link)", ["yahoo", "anchor2"] );
 
-	t( ":not chaining (compound)", "#qunit-fixture div[id]:not(:has(div, span)):not(:has(*))", ["divWithNoTabIndex"] );
+	t( ":not chaining (compound)", "#qunit-fixture div[id]:not(:has(div, span)):not(:has(*))", ["nothiddendivchild", "divWithNoTabIndex"] );
 	t( ":not chaining (with attribute)", "#qunit-fixture form[id]:not([action$='formaction']):not(:button)", ["lengthtest", "name-tests", "testForm"] );
 	t( ":not chaining (colon in attribute)", "#qunit-fixture form[id]:not([action='form:action']):not(:button)", ["form", "lengthtest", "name-tests", "testForm"] );
 	t( ":not chaining (colon in attribute and nested chaining)", "#qunit-fixture form[id]:not([action='form:action']:button):not(:input)", ["form", "lengthtest", "name-tests", "testForm"] );
@@ -789,8 +847,8 @@ test("pseudo - :not", function() {
 test("pseudo - position", function() {
 	expect( 34 );
 
-	t( "First element", "div:first", ["qunit-testrunner-toolbar"] );
-	t( "First element(case-insensitive)", "div:fiRst", ["qunit-testrunner-toolbar"] );
+	t( "First element", "div:first", ["qunit"] );
+	t( "First element(case-insensitive)", "div:fiRst", ["qunit"] );
 	t( "nth Element", "#qunit-fixture p:nth(1)", ["ap"] );
 	t( "First Element", "#qunit-fixture p:first", ["firstp"] );
 	t( "Last Element", "p:last", ["first"] );
@@ -811,11 +869,11 @@ test("pseudo - position", function() {
 	t( "Check position filtering", "div.nothiddendiv:last", ["nothiddendiv"] );
 	t( "Check position filtering", "div.nothiddendiv:not(:lt(0))", ["nothiddendiv"] );
 
-	t( "Check element position", "div div:eq(0)", ["nothiddendivchild"] );
-	t( "Check element position", "div div:eq(5)", ["t2037"] );
-	t( "Check element position", "div div:eq(29)", ["slideup"] );
-	t( "Check element position", "div div:first", ["nothiddendivchild"] );
-	t( "Check element position", "div > div:first", ["nothiddendivchild"] );
+	t( "Check element position", "#qunit-fixture div div:eq(0)", ["nothiddendivchild"] );
+	t( "Check element position", "#select1 option:eq(3)", ["option1d"] );
+	t( "Check element position", "#qunit-fixture div div:eq(10)", ["names-group"] );
+	t( "Check element position", "#qunit-fixture div div:first", ["nothiddendivchild"] );
+	t( "Check element position", "#qunit-fixture div > div:first", ["nothiddendivchild"] );
 	t( "Check element position", "#dl div:first div:first", ["foo"] );
 	t( "Check element position", "#dl div:first > div:first", ["foo"] );
 	t( "Check element position", "div#nothiddendiv:first > div:first", ["nothiddendivchild"] );
@@ -823,7 +881,7 @@ test("pseudo - position", function() {
 
 	t( "Check sort order with POS and comma", "#qunit-fixture em>em>em>em:first-child,div>em:first", ["siblingfirst", "siblinggreatgrandchild"] );
 
-	t( "Isolated position", ":last", ["fx-tests"] );
+	t( "Isolated position", ":last", ["last"] );
 
 	deepEqual( Sizzle( "*:lt(2) + *", null, [], Sizzle("#qunit-fixture > p") ), q("ap"), "Seeded pos with trailing relative" );
 
@@ -834,7 +892,7 @@ test("pseudo - position", function() {
 
 	// Sizzle extension
 	Sizzle.selectors.setFilters["primary"] = Sizzle.selectors.setFilters["first"];
-	t( "Extend Sizzle's POS selectors to rename first to primary", "div:primary", ["qunit-testrunner-toolbar"] );
+	t( "Extend Sizzle's POS selectors to rename first to primary", "div:primary", ["qunit"] );
 	// Reset
 	delete Sizzle.selectors.setFilters["primary"];
 });
