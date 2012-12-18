@@ -930,6 +930,51 @@ test("pseudo - :target and :root", function() {
 	equal( Sizzle(":root")[0], document.documentElement, ":root selector" );
 });
 
+test("pseudo - :lang", function() {
+	expect( 21 );
+
+	var previousLang = document.documentElement.lang;
+	document.documentElement.lang = "en";
+
+	var $fixture = jQuery("#qunit-fixture").attr( "lang", "fr" ),
+		xml = createWithFriesXML(),
+		foobar = Sizzle("foo_bar")[0];
+
+	function testLang( id ) {
+		t( ":lang => " + id, "#" + id + ":lang(fr)", [id] );
+		t( "case-insensitive :lang => " + id, "#" + id + ":lang(FR)", [id] );
+		t( "case-insensitive :lang => " + id, "#" + id + ":lang(Fr)", [id] );
+		t( "prefix check :lang => " + id, "#" + id + ":lang(french)", [] );
+	}
+
+	testLang("qunit-fixture");
+	testLang("firstUL");
+
+	// Should also match fr + "-"
+	// http://www.w3.org/TR/selectors/#lang-pseudo
+	$fixture.attr("lang", "fr-be");
+
+	testLang("qunit-fixture");
+	testLang("firstUL");
+
+	// XML
+	jQuery("#seite1", xml).attr("xml:lang", "fr");
+	ok( foobar, "foo_bar exists" );
+	ok( Sizzle.matchesSelector(foobar, ":lang(fr)"), "XML :lang(fr)" );
+	ok( Sizzle.matchesSelector(foobar, ":lang(fR)"), "XML case-insensitive :lang(fR)" );
+	ok( !Sizzle.matchesSelector(foobar, ":lang(french)"), "XML prefix check" );
+
+	raises(function() {
+		Sizzle.call( null, ":lang(*%fr)" );
+	}, function( e ) {
+		return e.message.indexOf("Syntax error") >= 0;
+	}, "lang value must be a valid javascript identifier" );
+
+	// Cleanup
+	$fixture.removeAttr("lang");
+	document.documentElement.lang = previousLang;
+});
+
 test("caching", function() {
 	expect( 1 );
 	Sizzle( ":not(code)", document.getElementById("ap") );
