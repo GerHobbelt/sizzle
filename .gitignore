@@ -1,6 +1,7 @@
 .project
 .settings
 *~
+*.bak
 *.diff
 *.patch
 .DS_Store
