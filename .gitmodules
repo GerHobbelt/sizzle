@@ -3,4 +3,4 @@
 	url = git@github.com:GerHobbelt/qunit.git
 [submodule "speed/benchmark.js"]
 	path = speed/benchmark.js
-	url = git://github.com/bestiejs/benchmark.js.git
+	url = git@github.com:GerHobbelt/benchmark.js.git
