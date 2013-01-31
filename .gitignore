@@ -6,4 +6,3 @@
 *.patch
 .DS_Store
 node_modules
-test/qunit
