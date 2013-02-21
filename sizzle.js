@@ -109,7 +109,7 @@ var i,
 
 	rsibling = /[\x20\t\r\n\f]*[+~]/,
 
-	rnative = /\{\s*\[native code\]\s*\}/,
+	rnative = /^[^{]+\{\s*\[native code/,
 
 	// Easily-parseable/retrievable ID or TAG or CLASS selectors
 	rquickExpr = /^(?:#([\w\-]+)|(\w+)|\.([\w\-]+))$/,
@@ -136,12 +136,12 @@ var i,
 
 // Use a stripped-down slice if we can't use a native one
 try {
-	slice.call( docElem.childNodes, 0 )[0].nodeType;
+	slice.call( preferredDoc.documentElement.childNodes, 0 )[0].nodeType;
 } catch ( e ) {
 	slice = function( i ) {
 		var elem,
 			results = [];
-		for ( ; (elem = this[i]); i++ ) {
+		while ( (elem = this[i++]) ) {
 			results.push( elem );
 		}
 		return results;
@@ -460,7 +460,7 @@ setDocument = Sizzle.setDocument = function( node ) {
 
 			// Filter out possible comments
 			if ( tag === "*" ) {
-				for ( ; (elem = results[i]); i++ ) {
+				while ( (elem = results[i++]) ) {
 					if ( elem.nodeType === 1 ) {
 						tmp.push( elem );
 					}
@@ -618,14 +618,10 @@ setDocument = Sizzle.setDocument = function( node ) {
 			ap = [ a ],
 			bp = [ b ];
 
-		// The nodes are identical, we can exit early
+		// Exit early if the nodes are identical
 		if ( a === b ) {
 			hasDuplicate = true;
 			return 0;
-
-		// Fallback to using sourceIndex (in IE) if it's available on both nodes
-		} else if ( a.sourceIndex && b.sourceIndex ) {
-			return ( ~b.sourceIndex || MAX_NEGATIVE ) - ( contains( preferredDoc, a ) && ~a.sourceIndex || MAX_NEGATIVE );
 
 		// Parentless nodes are either documents or disconnected
 		} else if ( !aup || !bup ) {
@@ -765,11 +761,20 @@ Sizzle.uniqueSort = function( results ) {
 };
 
 function siblingCheck( a, b ) {
-	var cur = a && b && a.nextSibling;
+	var cur = b && a,
+		diff = cur && ( ~b.sourceIndex || MAX_NEGATIVE ) - ( ~a.sourceIndex || MAX_NEGATIVE );
 
-	for ( ; cur; cur = cur.nextSibling ) {
-		if ( cur === b ) {
-			return -1;
+	// Use IE sourceIndex if available on both nodes
+	if ( diff ) {
+		return diff;
+	}
+
+	// Check if b follows a
+	if ( cur ) {
+		while ( (cur = cur.nextSibling) ) {
+			if ( cur === b ) {
+				return -1;
+			}
 		}
 	}
 
@@ -979,9 +984,9 @@ Expr = Sizzle.selectors = {
 					operator === "!=" ? result !== check :
 					operator === "^=" ? check && result.indexOf( check ) === 0 :
 					operator === "*=" ? check && result.indexOf( check ) > -1 :
-					operator === "$=" ? check && result.substr( result.length - check.length ) === check :
+					operator === "$=" ? check && result.slice( -check.length ) === check :
 					operator === "~=" ? ( " " + result + " " ).indexOf( check ) > -1 :
-					operator === "|=" ? result === check || result.substr( 0, check.length + 1 ) === check + "-" :
+					operator === "|=" ? result === check || result.slice( 0, check.length + 1 ) === check + "-" :
 					false;
 			};
 		},
@@ -1399,7 +1404,7 @@ function toSelector( tokens ) {
 
 function addCombinator( matcher, combinator, base ) {
 	var dir = combinator.dir,
-		checkNonElements = base && combinator.dir === "parentNode",
+		checkNonElements = base && dir === "parentNode",
 		doneName = done++;
 
 	return combinator.first ?
@@ -1642,8 +1647,8 @@ function matcherFromGroupMatchers( elementMatchers, setMatchers ) {
 				contextBackup = outermostContext,
 				// We must always have either seed elements or context
 				elems = seed || byElement && Expr.find["TAG"]( "*", expandContext && context.parentNode || context ),
-				// Nested matchers should use non-integer dirruns
-				dirrunsUnique = (dirruns += contextBackup == null ? 1 : Math.E);
+				// Use integer dirruns iff this is the outermost matcher
+				dirrunsUnique = (dirruns += contextBackup == null ? 1 : Math.random() || 0.1);
 
 			if ( outermost ) {
 				outermostContext = context !== document && context;
@@ -1651,9 +1656,11 @@ function matcherFromGroupMatchers( elementMatchers, setMatchers ) {
 			}
 
 			// Add elements passing elementMatchers directly to results
+			// Keep `i` a string if there are no elements so `matchedCount` will be "00" below
 			for ( ; (elem = elems[i]) != null; i++ ) {
 				if ( byElement && elem ) {
-					for ( j = 0; (matcher = elementMatchers[j]); j++ ) {
+					j = 0;
+					while ( (matcher = elementMatchers[j++]) ) {
 						if ( matcher( elem, context, xml ) ) {
 							results.push( elem );
 							break;
@@ -1680,10 +1687,10 @@ function matcherFromGroupMatchers( elementMatchers, setMatchers ) {
 			}
 
 			// Apply set filters to unmatched elements
-			// `i` starts as a string, so matchedCount would equal "00" if there are no elements
 			matchedCount += i;
 			if ( bySet && i !== matchedCount ) {
-				for ( j = 0; (matcher = setMatchers[j]); j++ ) {
+				j = 0;
+				while ( (matcher = setMatchers[j++]) ) {
 					matcher( unmatched, setMatched, context, xml );
 				}
 
@@ -1785,7 +1792,8 @@ function select( selector, context, results, seed ) {
 			}
 
 			// Fetch a seed set for right-to-left matching
-			for ( i = matchExpr["needsContext"].test( selector ) ? -1 : tokens.length - 1; i >= 0; i-- ) {
+			i = matchExpr["needsContext"].test( selector ) ? 0 : tokens.length;
+			while ( i-- ) {
 				token = tokens[i];
 
 				// Abort if we hit a combinator
