@@ -1,12 +1,12 @@
 /*!
- * Sizzle CSS Selector Engine v@VERSION
+ * Sizzle CSS Selector Engine v1.9.2-pre
  * http://sizzlejs.com/
  *
  * Copyright 2013 jQuery Foundation, Inc. and other contributors
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: @DATE
+ * Date: 2013-04-16
  */
 (function( window, undefined ) {
 
@@ -120,7 +120,7 @@ var i,
 	rnative = /^[^{]+\{\s*\[native \w/,
 
 	// Easily-parseable/retrievable ID or TAG or CLASS selectors
-	rquickExpr = /^(?:#([\w\-]+)|(\w+)|\.([\w\-]+))$/,
+	rquickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
 
 	rinputs = /^(?:input|select|textarea|button)$/i,
 	rheader = /^h\d$/i,
@@ -222,7 +222,6 @@ function assert( fn ) {
 		if ( div.parentNode ) {
 			div.parentNode.removeChild( div );
 		}
-
 		// release memory in IE
 		div = null;
 	}
