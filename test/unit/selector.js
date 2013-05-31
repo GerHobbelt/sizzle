@@ -46,16 +46,17 @@ module("selector", { teardown: moduleTeardown });
 */
 
 test("element", function() {
-	expect( 37 );
+	expect( 38 );
 
 	var form, all, good, i, obj1, lengthtest,
 		siblingTest, iframe, iframeDoc, html;
 
 	equal( Sizzle("").length, 0, "Empty selector returns an empty array" );
-	equal( Sizzle(" ").length, 0, "Empty selector returns an empty array" );
-	equal( Sizzle("\t").length, 0, "Empty selector returns an empty array" );
+	deepEqual( Sizzle("div", document.createTextNode("")), [], "Text element as context fails silently" );
 	form = document.getElementById("form");
 	ok( !Sizzle.matchesSelector( form, "" ), "Empty string passed to matchesSelector does not match" );
+	equal( Sizzle(" ").length, 0, "Empty selector returns an empty array" );
+	equal( Sizzle("\t").length, 0, "Empty selector returns an empty array" );
 
 	ok( Sizzle("*").length >= 30, "Select all" );
 	all = Sizzle("*");
@@ -205,7 +206,7 @@ test("broken", function() {
 });
 
 test("id", function() {
-	expect( 32 );
+	expect( 34 );
 
 	var fiddle, a;
 
@@ -238,15 +239,11 @@ test("id", function() {
 	t( "All Children of ID", "#foo > *", ["sndp", "en", "sap"] );
 	t( "All Children of ID with no children", "#firstUL > *", [] );
 
-	a = jQuery("<div>" +
-		"<a name='tName1'>tName1 <code>A</code></a>" +
-		"<a name='tName2'>tName2 <code>A</code></a>" +
-		"<div id='tName1'>tName1 <code>DIV</code></div>" +
-	"</div>").appendTo("#qunit-fixture");
 	equal( Sizzle("#tName1")[0].id, "tName1", "ID selector with same value for a name attribute" );
-	deepEqual( Sizzle("#tName2"), [], "ID selector non-existing but name attribute on an A tag" );
-	deepEqual( Sizzle("#tName2 code"), [], "Leading ID selector non-existing but name attribute on an A tag" );
-	a.remove();
+	t( "ID selector non-existing but name attribute on an A tag",         "#tName2",      [] );
+	t( "Leading ID selector non-existing but name attribute on an A tag", "#tName2 span", [] );
+	t( "Leading ID selector existing, retrieving the child",              "#tName1 span", ["tName1-span"] );
+	equal( Sizzle("div > div #tName1")[0].id, Sizzle("#tName1-span")[0].parentNode.id, "Ending with ID" );
 
 	a = jQuery("<a id='backslash\\foo'></a>").appendTo("#qunit-fixture");
 	t( "ID Selector contains backslash", "#backslash\\\\foo", ["backslash\\foo"] );
@@ -310,9 +307,9 @@ test("class", function() {
 });
 
 test("name", function() {
-	expect( 15 );
+	expect( 13 );
 
-	var form, a;
+	var form;
 
 	t( "Name selector", "input[name=action]", ["text1"] );
 	t( "Name selector with single quotes", "input[name='action']", ["text1"] );
@@ -333,17 +330,9 @@ test("name", function() {
 
 	form.remove();
 
-	a = jQuery("<div><a id=\"tName1ID\" name=\"tName1\">tName1 A</a><a id=\"tName2ID\" name=\"tName2\">tName2 A</a><div id=\"tName1\">tName1 Div</div></div>")
-		.appendTo("#qunit-fixture").children();
-
-	equal( a.length, 3, "Make sure the right number of elements were inserted." );
-	equal( a[1].id, "tName2ID", "Make sure the right number of elements were inserted." );
-
-	equal( Sizzle("[name=tName1]")[0], a[0], "Find elements that have similar IDs" );
-	equal( Sizzle("[name=tName2]")[0], a[1], "Find elements that have similar IDs" );
+	t( "Find elements that have similar IDs", "[name=tName1]", ["tName1ID"] );
+	t( "Find elements that have similar IDs", "[name=tName2]", ["tName2ID"] );
 	t( "Find elements that have similar IDs", "#tName2ID", ["tName2ID"] );
-
-	a.parent().remove();
 });
 
 test("multiple", function() {
@@ -369,15 +358,15 @@ test("child and adjacent", function() {
 	t( "Child w/ Class", "p > a.blog", ["mark","simon"] );
 	t( "All Children", "code > *", ["anchor1","anchor2"] );
 	t( "All Grandchildren", "p > * > *", ["anchor1","anchor2"] );
-	t( "Adjacent", "#qunit-fixture a + a", ["groups"] );
-	t( "Adjacent", "#qunit-fixture a +a", ["groups"] );
-	t( "Adjacent", "#qunit-fixture a+ a", ["groups"] );
-	t( "Adjacent", "#qunit-fixture a+a", ["groups"] );
+	t( "Adjacent", "#qunit-fixture a + a", ["groups", "tName2ID"] );
+	t( "Adjacent", "#qunit-fixture a +a", ["groups", "tName2ID"] );
+	t( "Adjacent", "#qunit-fixture a+ a", ["groups", "tName2ID"] );
+	t( "Adjacent", "#qunit-fixture a+a", ["groups", "tName2ID"] );
 	t( "Adjacent", "p + p", ["ap","en","sap"] );
 	t( "Adjacent", "p#firstp + p", ["ap"] );
 	t( "Adjacent", "p[lang=en] + p", ["sap"] );
 	t( "Adjacent", "a.GROUPS + code + a", ["mark"] );
-	t( "Comma, Child, and Adjacent", "#qunit-fixture a + a, code > a", ["groups","anchor1","anchor2"] );
+	t( "Comma, Child, and Adjacent", "#qunit-fixture a + a, code > a", ["groups","anchor1","anchor2","tName2ID"] );
 	t( "Element Preceded By", "#qunit-fixture p ~ div", ["foo", "nothiddendiv", "moretests","tabindex-tests", "liveHandlerOrder", "siblingTest"] );
 	t( "Element Preceded By", "#first ~ div", ["moretests","tabindex-tests", "liveHandlerOrder", "siblingTest"] );
 	t( "Element Preceded By", "#groups ~ a", ["mark"] );
@@ -419,7 +408,7 @@ test("child and adjacent", function() {
 });
 
 test("attributes", function() {
-	expect( 70 );
+	expect( 76 );
 
 	var opt, input, attrbad, div;
 
@@ -508,8 +497,10 @@ test("attributes", function() {
 	ok( Sizzle.matchesSelector( input, ":input[data-pos=':first']"), "POS within attribute value after pseudo is treated as an attribute value" );
 	input.removeAttribute("data-pos");
 
-	// Make sure attribute value quoting works correctly. See jQuery #6093; #6428
+	// Make sure attribute value quoting works correctly. See jQuery #6093; #6428; #13894
+	// Use seeded results to bypass querySelectorAll optimizations
 	attrbad = jQuery(
+		"<input type='hidden' id='attrbad_space' name='foo bar'/>" +
 		"<input type='hidden' id='attrbad_dot' value='2' name='foo.baz'/>" +
 		"<input type='hidden' id='attrbad_brackets' value='2' name='foo[baz]'/>" +
 		"<input type='hidden' id='attrbad_injection' data-attr='foo_baz&#39;]'/>" +
@@ -518,26 +509,40 @@ test("attributes", function() {
 		"<input type='hidden' id='attrbad_backslash_quote' data-attr='&#92;&#39;'/>" +
 		"<input type='hidden' id='attrbad_backslash_backslash' data-attr='&#92;&#92;'/>" +
 		"<input type='hidden' id='attrbad_unicode' data-attr='&#x4e00;'/>"
-	).appendTo("#qunit-fixture");
+	).appendTo("#qunit-fixture").get();
 
 	t( "Underscores don't need escaping", "input[id=types_all]", ["types_all"] );
 
-	t( "Escaped dot", "input[name=foo\\.baz]", ["attrbad_dot"] );
-	t( "Escaped brackets", "input[name=foo\\[baz\\]]", ["attrbad_brackets"] );
-	t( "Escaped quote + right bracket", "input[data-attr='foo_baz\\']']", ["attrbad_injection"] );
+	deepEqual( Sizzle( "input[name=foo\\ bar]", null, null, attrbad ), q("attrbad_space"),
+		"Escaped space" );
+	deepEqual( Sizzle( "input[name=foo\\.baz]", null, null, attrbad ), q("attrbad_dot"),
+		"Escaped dot" );
+	deepEqual( Sizzle( "input[name=foo\\[baz\\]]", null, null, attrbad ), q("attrbad_brackets"),
+		"Escaped brackets" );
+	deepEqual( Sizzle( "input[data-attr='foo_baz\\']']", null, null, attrbad ), q("attrbad_injection"),
+		"Escaped quote + right bracket" );
 
-	t( "Quoted quote", "input[data-attr='\\'']", ["attrbad_quote"] );
-	t( "Quoted backslash", "input[data-attr='\\\\']", ["attrbad_backslash"] );
-	t( "Quoted backslash quote", "input[data-attr='\\\\\\'']", ["attrbad_backslash_quote"] );
-	t( "Quoted backslash backslash", "input[data-attr='\\\\\\\\']", ["attrbad_backslash_backslash"] );
+	deepEqual( Sizzle( "input[data-attr='\\'']", null, null, attrbad ), q("attrbad_quote"),
+		"Quoted quote" );
+	deepEqual( Sizzle( "input[data-attr='\\\\']", null, null, attrbad ), q("attrbad_backslash"),
+		"Quoted backslash" );
+	deepEqual( Sizzle( "input[data-attr='\\\\\\'']", null, null, attrbad ), q("attrbad_backslash_quote"),
+		"Quoted backslash quote" );
+	deepEqual( Sizzle( "input[data-attr='\\\\\\\\']", null, null, attrbad ), q("attrbad_backslash_backslash"),
+		"Quoted backslash backslash" );
 
-	t( "Quoted backslash backslash (numeric escape)", "input[data-attr='\\5C\\\\']", ["attrbad_backslash_backslash"] );
-	t( "Quoted backslash backslash (numeric escape with trailing space)", "input[data-attr='\\5C \\\\']", ["attrbad_backslash_backslash"] );
-	t( "Quoted backslash backslash (numeric escape with trailing tab)", "input[data-attr='\\5C\t\\\\']", ["attrbad_backslash_backslash"] );
-	t( "Long numeric escape (BMP)", "input[data-attr='\\04e00']", ["attrbad_unicode"] );
+	deepEqual( Sizzle( "input[data-attr='\\5C\\\\']", null, null, attrbad ), q("attrbad_backslash_backslash"),
+		"Quoted backslash backslash (numeric escape)" );
+	deepEqual( Sizzle( "input[data-attr='\\5C \\\\']", null, null, attrbad ), q("attrbad_backslash_backslash"),
+		"Quoted backslash backslash (numeric escape with trailing space)" );
+	deepEqual( Sizzle( "input[data-attr='\\5C\t\\\\']", null, null, attrbad ), q("attrbad_backslash_backslash"),
+		"Quoted backslash backslash (numeric escape with trailing tab)" );
+	deepEqual( Sizzle( "input[data-attr='\\04e00']", null, null, attrbad ), q("attrbad_unicode"),
+		"Long numeric escape (BMP)" );
 	document.getElementById("attrbad_unicode").setAttribute( "data-attr", "\uD834\uDF06A" );
 	// It was too much code to fix Safari 5.x Supplemental Plane crashes (see ba5f09fa404379a87370ec905ffa47f8ac40aaa3)
-	// t( "Long numeric escape (non-BMP)", "input[data-attr='\\01D306A']", ["attrbad_unicode"] );
+	// deepEqual( Sizzle( "input[data-attr='\\01D306A']", null, null, attrbad ), q("attrbad_unicode"),
+	// 	"Long numeric escape (non-BMP)" );
 
 	t( "input[type=text]", "#form input[type=text]", ["text1", "text2", "hidden2", "name"] );
 	t( "input[type=search]", "#form input[type=search]", ["search"] );
@@ -548,6 +553,16 @@ test("attributes", function() {
 	div.innerHTML = "<div id='foo' xml:test='something'></div>";
 
 	deepEqual( Sizzle( "[xml\\:test]", div ), [ div.firstChild ], "Finding by attribute with escaped characters." );
+
+	div = document.getElementById("foo");
+	t( "Object.prototype property \"constructor\" (negative)", "[constructor]", [] );
+	t( "Gecko Object.prototype property \"watch\" (negative)", "[watch]", [] );
+	div.setAttribute( "constructor", "foo" );
+	div.setAttribute( "watch", "bar" );
+	t( "Object.prototype property \"constructor\"", "[constructor='foo']", ["foo"] );
+	t( "Gecko Object.prototype property \"watch\"", "[watch='bar']", ["foo"] );
+
+	t( "Value attribute is retrieved correctly", "input[value=Test]", ["text1", "text2"] );
 });
 
 test("pseudo - (parent|empty)", function() {
@@ -692,7 +707,7 @@ test("pseudo - has", function() {
 });
 
 test("pseudo - misc", function() {
-	expect( 38 );
+	expect( 39 );
 
 	var select, tmp, input;
 
@@ -705,6 +720,7 @@ test("pseudo - misc", function() {
 	select = document.getElementById("select1");
 	ok( Sizzle.matchesSelector( select, ":has(option)" ), "Has Option Matches" );
 
+	ok( Sizzle("a:contains('')").length, "Empty string contains" );
 	t( "Text Contains", "a:contains(Google)", ["google","groups"] );
 	t( "Text Contains", "a:contains(Google Groups)", ["groups"] );
 
@@ -1058,4 +1074,34 @@ test("caching", function() {
 	expect( 1 );
 	Sizzle( ":not(code)", document.getElementById("ap") );
 	deepEqual( Sizzle( ":not(code)", document.getElementById("foo") ), q("sndp", "en", "yahoo", "sap", "anchor2", "simon"), "Reusing selector with new context" );
+});
+
+asyncTest( "Iframe dispatch should not affect Sizzle, see jQuery #13936", 1, function() {
+	var i = 0,
+		thrown = false,
+		iframe = document.getElementById("iframe"),
+		iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+	jQuery( iframe ).on( "load", function() {
+		var doc;
+
+		try {
+			i++;
+			doc = this.contentDocument || this.contentWindow.document;
+			Sizzle( "form", doc ).pop().submit();
+
+		} catch ( e ) {
+			thrown = true;
+		}
+
+		if ( i === 2 ) {
+			jQuery( this ).off("load");
+			ok( !thrown, "Iframe reload should not affect Sizzle, see jQuery #13936" );
+			start();
+		}
+	});
+
+	iframeDoc.open();
+	iframeDoc.write("<body><form></form></body>");
+	iframeDoc.close();
 });

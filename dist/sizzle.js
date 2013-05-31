@@ -1,16 +1,17 @@
 /*!
- * Sizzle CSS Selector Engine v1.9.3
+ * Sizzle CSS Selector Engine v1.9.4-pre
  * http://sizzlejs.com/
  *
  * Copyright 2013 jQuery Foundation, Inc. and other contributors
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2013-04-18
+ * Date: 2013-05-27
  */
 (function( window, undefined ) {
 
 var i,
+	support,
 	cachedruns,
 	Expr,
 	getText,
@@ -32,7 +33,6 @@ var i,
 	// Instance-specific data
 	expando = "sizzle" + -(new Date()),
 	preferredDoc = window.document,
-	support = {},
 	dirruns = 0,
 	done = 0,
 	classCache = createCache(),
@@ -45,7 +45,8 @@ var i,
 	strundefined = typeof undefined,
 	MAX_NEGATIVE = 1 << 31,
 
-	// Array methods
+	// Instance methods
+	hasOwn = ({}).hasOwnProperty,
 	arr = [],
 	pop = arr.pop,
 	push_native = arr.push,
@@ -110,7 +111,7 @@ var i,
 		"CHILD": new RegExp( "^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\(" + whitespace +
 			"*(even|odd|(([+-]|)(\\d*)n|)" + whitespace + "*(?:([+-]|)" + whitespace +
 			"*(\\d+)|))" + whitespace + "*\\)|)", "i" ),
-		"boolean": new RegExp( "^(?:" + booleans + ")$", "i" ),
+		"bool": new RegExp( "^(?:" + booleans + ")$", "i" ),
 		// For use in libraries implementing .is()
 		// We use this for POS matching in `select`
 		"needsContext": new RegExp( "^" + whitespace + "*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\\(" +
@@ -128,11 +129,13 @@ var i,
 	rescape = /'|\\/g,
 
 	// CSS escapes http://www.w3.org/TR/CSS21/syndata.html#escaped-characters
-	runescape = /\\([\da-fA-F]{1,6}[\x20\t\r\n\f]?|.)/g,
-	funescape = function( _, escaped ) {
+	runescape = new RegExp( "\\\\([\\da-f]{1,6}" + whitespace + "?|(" + whitespace + ")|.)", "ig" ),
+	funescape = function( _, escaped, escapedWhitespace ) {
 		var high = "0x" + escaped - 0x10000;
 		// NaN means non-codepoint
-		return high !== high ?
+		// Support: Firefox
+		// Workaround erroneous numeric interpretation of +"0x"
+		return high !== high || escapedWhitespace ?
 			escaped :
 			// BMP codepoint
 			high < 0 ?
@@ -168,64 +171,6 @@ try {
 			target.length = j - 1;
 		}
 	};
-}
-
-/**
- * For feature detection
- * @param {Function} fn The function to test for native support
- */
-function isNative( fn ) {
-	return rnative.test( fn + "" );
-}
-
-/**
- * Create key-value caches of limited size
- * @returns {Function(string, Object)} Returns the Object data after storing it on itself with
- *	property name the (space-suffixed) string and (if the cache is larger than Expr.cacheLength)
- *	deleting the oldest entry
- */
-function createCache() {
-	var cache,
-		keys = [];
-
-	return (cache = function( key, value ) {
-		// Use (key + " ") to avoid collision with native prototype properties (see Issue #157)
-		if ( keys.push( key += " " ) > Expr.cacheLength ) {
-			// Only keep the most recent entries
-			delete cache[ keys.shift() ];
-		}
-		return (cache[ key ] = value);
-	});
-}
-
-/**
- * Mark a function for special use by Sizzle
- * @param {Function} fn The function to mark
- */
-function markFunction( fn ) {
-	fn[ expando ] = true;
-	return fn;
-}
-
-/**
- * Support testing using an element
- * @param {Function} fn Passed the created div and expects a boolean result
- */
-function assert( fn ) {
-	var div = document.createElement("div");
-
-	try {
-		return !!fn( div );
-	} catch (e) {
-		return false;
-	} finally {
-		if ( div.parentNode ) {
-			div.parentNode.removeChild( div );
-		}
-
-		// release memory in IE
-		div = null;
-	}
 }
 
 function Sizzle( selector, context, results, seed ) {
@@ -338,6 +283,195 @@ function Sizzle( selector, context, results, seed ) {
 }
 
 /**
+ * For feature detection
+ * @param {Function} fn The function to test for native support
+ */
+function isNative( fn ) {
+	return rnative.test( fn + "" );
+}
+
+/**
+ * Create key-value caches of limited size
+ * @returns {Function(string, Object)} Returns the Object data after storing it on itself with
+ *	property name the (space-suffixed) string and (if the cache is larger than Expr.cacheLength)
+ *	deleting the oldest entry
+ */
+function createCache() {
+	var keys = [];
+
+	function cache( key, value ) {
+		// Use (key + " ") to avoid collision with native prototype properties (see Issue #157)
+		if ( keys.push( key += " " ) > Expr.cacheLength ) {
+			// Only keep the most recent entries
+			delete cache[ keys.shift() ];
+		}
+		return (cache[ key ] = value);
+	}
+	return cache;
+}
+
+/**
+ * Mark a function for special use by Sizzle
+ * @param {Function} fn The function to mark
+ */
+function markFunction( fn ) {
+	fn[ expando ] = true;
+	return fn;
+}
+
+/**
+ * Support testing using an element
+ * @param {Function} fn Passed the created div and expects a boolean result
+ */
+function assert( fn ) {
+	var div = document.createElement("div");
+
+	try {
+		return !!fn( div );
+	} catch (e) {
+		return false;
+	} finally {
+		// Remove from its parent by default
+		if ( div.parentNode ) {
+			div.parentNode.removeChild( div );
+		}
+		// release memory in IE
+		div = null;
+	}
+}
+
+/**
+ * Adds the same handler for all of the specified attrs
+ * @param {String} attrs Pipe-separated list of attributes
+ * @param {Function} handler The method that will be applied if the test fails
+ * @param {Boolean} test The result of a test. If true, null will be set as the handler in leiu of the specified handler
+ */
+function addHandle( attrs, handler, test ) {
+	attrs = attrs.split("|");
+	var current,
+		i = attrs.length,
+		setHandle = test ? null : handler;
+
+	while ( i-- ) {
+		// Don't override a user's handler
+		if ( !(current = Expr.attrHandle[ attrs[i] ]) || current === handler ) {
+			Expr.attrHandle[ attrs[i] ] = setHandle;
+		}
+	}
+}
+
+/**
+ * Fetches boolean attributes by node
+ * @param {Element} elem
+ * @param {String} name
+ */
+function boolHandler( elem, name ) {
+	// XML does not need to be checked as this will not be assigned for XML documents
+	var val = elem.getAttributeNode( name );
+	return val && val.specified ?
+		val.value :
+		elem[ name ] === true ? name.toLowerCase() : null;
+}
+
+/**
+ * Fetches attributes without interpolation
+ * http://msdn.microsoft.com/en-us/library/ms536429%28VS.85%29.aspx
+ * @param {Element} elem
+ * @param {String} name
+ */
+function interpolationHandler( elem, name ) {
+	// XML does not need to be checked as this will not be assigned for XML documents
+	return elem.getAttribute( name, name.toLowerCase() === "type" ? 1 : 2 );
+}
+
+/**
+ * Uses defaultValue to retrieve value in IE6/7
+ * @param {Element} elem
+ * @param {String} name
+ */
+function valueHandler( elem ) {
+	// Ignore the value *property* on inputs by using defaultValue
+	// Fallback to Sizzle.attr by returning undefined where appropriate
+	// XML does not need to be checked as this will not be assigned for XML documents
+	if ( elem.nodeName.toLowerCase() === "input" ) {
+		return elem.defaultValue;
+	}
+}
+
+/**
+ * Checks document order of two siblings
+ * @param {Element} a
+ * @param {Element} b
+ * @returns Returns -1 if a precedes b, 1 if a follows b
+ */
+function siblingCheck( a, b ) {
+	var cur = b && a,
+		diff = cur && a.nodeType === 1 && b.nodeType === 1 &&
+			( ~b.sourceIndex || MAX_NEGATIVE ) -
+			( ~a.sourceIndex || MAX_NEGATIVE );
+
+	// Use IE sourceIndex if available on both nodes
+	if ( diff ) {
+		return diff;
+	}
+
+	// Check if b follows a
+	if ( cur ) {
+		while ( (cur = cur.nextSibling) ) {
+			if ( cur === b ) {
+				return -1;
+			}
+		}
+	}
+
+	return a ? 1 : -1;
+}
+
+/**
+ * Returns a function to use in pseudos for input types
+ * @param {String} type
+ */
+function createInputPseudo( type ) {
+	return function( elem ) {
+		var name = elem.nodeName.toLowerCase();
+		return name === "input" && elem.type === type;
+	};
+}
+
+/**
+ * Returns a function to use in pseudos for buttons
+ * @param {String} type
+ */
+function createButtonPseudo( type ) {
+	return function( elem ) {
+		var name = elem.nodeName.toLowerCase();
+		return (name === "input" || name === "button") && elem.type === type;
+	};
+}
+
+/**
+ * Returns a function to use in pseudos for positionals
+ * @param {Function} fn
+ */
+function createPositionalPseudo( fn ) {
+	return markFunction(function( argument ) {
+		argument = +argument;
+		return markFunction(function( seed, matches ) {
+			var j,
+				matchIndexes = fn( [], seed.length, argument ),
+				i = matchIndexes.length;
+
+			// Match elements found at the specified indexes
+			while ( i-- ) {
+				if ( seed[ (j = matchIndexes[i]) ] ) {
+					seed[j] = !(matches[j] = seed[j]);
+				}
+			}
+		});
+	});
+}
+
+/**
  * Detect xml
  * @param {Element|Object} elem An element or a document
  */
@@ -348,13 +482,17 @@ isXML = Sizzle.isXML = function( elem ) {
 	return documentElement ? documentElement.nodeName !== "HTML" : false;
 };
 
+// Expose support vars for convenience
+support = Sizzle.support = {};
+
 /**
  * Sets document-related variables once based on the current document
  * @param {Element|Object} [doc] An element or document object to use to set the document
  * @returns {Object} Returns the current document
  */
 setDocument = Sizzle.setDocument = function( node ) {
-	var doc = node ? node.ownerDocument || node : preferredDoc;
+	var doc = node ? node.ownerDocument || node : preferredDoc,
+		parent = doc.parentWindow;
 
 	// If no document and documentElement is available, return
 	if ( doc === document || doc.nodeType !== 9 || !doc.documentElement ) {
@@ -368,17 +506,54 @@ setDocument = Sizzle.setDocument = function( node ) {
 	// Support tests
 	documentIsHTML = !isXML( doc );
 
-	// Check if getElementsByTagName("*") returns only elements
-	support.getElementsByTagName = assert(function( div ) {
-		div.appendChild( doc.createComment("") );
-		return !div.getElementsByTagName("*").length;
-	});
+	// Support: IE>8
+	// If iframe document is assigned to "document" variable and if iframe has been reloaded,
+	// IE will throw "permission denied" error when accessing "document" variable, see jQuery #13936
+	if ( parent && parent.frameElement ) {
+		parent.attachEvent( "onbeforeunload", function() {
+			setDocument();
+		});
+	}
+
+	/* Attributes
+	---------------------------------------------------------------------- */
 
 	// Support: IE<8
 	// Verify that getAttribute really returns attributes and not properties (excepting IE8 booleans)
 	support.attributes = assert(function( div ) {
+
+		// Support: IE<8
+		// Prevent attribute/property "interpolation"
+		div.innerHTML = "<a href='#'></a>";
+		addHandle( "type|href|height|width", interpolationHandler, div.firstChild.getAttribute("href") === "#" );
+
+		// Support: IE<9
+		// Use getAttributeNode to fetch booleans when getAttribute lies
+		addHandle( booleans, boolHandler, div.getAttribute("disabled") == null );
+
 		div.className = "i";
 		return !div.getAttribute("className");
+	});
+
+	// Support: IE<9
+	// Retrieving value should defer to defaultValue
+	support.input = assert(function( div ) {
+		div.innerHTML = "<input>";
+		div.firstChild.setAttribute( "value", "" );
+		return div.firstChild.getAttribute( "value" ) === "";
+	});
+
+	// IE6/7 still return empty string for value,
+	// but are actually retrieving the property
+	addHandle( "value", valueHandler, support.attributes && support.input );
+
+	/* getElement(s)By*
+	---------------------------------------------------------------------- */
+
+	// Check if getElementsByTagName("*") returns only elements
+	support.getElementsByTagName = assert(function( div ) {
+		div.appendChild( doc.createComment("") );
+		return !div.getElementsByTagName("*").length;
 	});
 
 	// Check if getElementsByClassName can be trusted
@@ -393,19 +568,9 @@ setDocument = Sizzle.setDocument = function( node ) {
 		return div.getElementsByClassName("i").length === 2;
 	});
 
-	// Support: Webkit<537.32 - Safari 6.0.3/Chrome 25 (fixed in Chrome 27)
-	// Detached nodes confoundingly follow *each other*
-	support.sortDetached = assert(function( div1 ) {
-		// Should return 1, but returns 4 (following)
-		return div1.compareDocumentPosition( document.createElement("div") ) & 1;
-	});
-
 	// Support: IE<10
 	// Check if getElementById returns elements by name
-	// Support: Windows 8 Native Apps
-	// Assigning innerHTML with "name" attributes throws uncatchable exceptions
-	// (http://msdn.microsoft.com/en-us/library/ie/hh465388.aspx)
-	// and the broken getElementById methods don't pick up programatically-set names,
+	// The broken getElementById methods don't pick up programatically-set names,
 	// so use a roundabout getElementsByName test
 	support.getById = assert(function( div ) {
 		docElem.appendChild( div ).id = expando;
@@ -429,17 +594,10 @@ setDocument = Sizzle.setDocument = function( node ) {
 			};
 		};
 	} else {
-		Expr.find["ID"] = function( id, context ) {
-			if ( typeof context.getElementById !== strundefined && documentIsHTML ) {
-				var m = context.getElementById( id );
+		// Support: IE6/7
+		// getElementById is not reliable as a find shortcut
+		delete Expr.find["ID"];
 
-				return m ?
-					m.id === id || typeof m.getAttributeNode !== strundefined && m.getAttributeNode("id").value === id ?
-						[m] :
-						undefined :
-					[];
-			}
-		};
 		Expr.filter["ID"] =  function( id ) {
 			var attrId = id.replace( runescape, funescape );
 			return function( elem ) {
@@ -481,6 +639,9 @@ setDocument = Sizzle.setDocument = function( node ) {
 			return context.getElementsByClassName( className );
 		}
 	};
+
+	/* QSA/matchesSelector
+	---------------------------------------------------------------------- */
 
 	// QSA and matchesSelector support
 
@@ -526,7 +687,7 @@ setDocument = Sizzle.setDocument = function( node ) {
 			// Should not select anything
 			// Support: Windows 8 Native Apps
 			// The type attribute is restricted during .innerHTML assignment
-			var input = document.createElement("input");
+			var input = doc.createElement("input");
 			input.setAttribute( "type", "hidden" );
 			div.appendChild( input ).setAttribute( "t", "" );
 
@@ -566,6 +727,9 @@ setDocument = Sizzle.setDocument = function( node ) {
 	rbuggyQSA = rbuggyQSA.length && new RegExp( rbuggyQSA.join("|") );
 	rbuggyMatches = rbuggyMatches.length && new RegExp( rbuggyMatches.join("|") );
 
+	/* Contains
+	---------------------------------------------------------------------- */
+
 	// Element contains another
 	// Purposefully does not implement inclusive descendent
 	// As in, an element does not contain itself
@@ -589,6 +753,16 @@ setDocument = Sizzle.setDocument = function( node ) {
 			}
 			return false;
 		};
+
+	/* Sorting
+	---------------------------------------------------------------------- */
+
+	// Support: Webkit<537.32 - Safari 6.0.3/Chrome 25 (fixed in Chrome 27)
+	// Detached nodes confoundingly follow *each other*
+	support.sortDetached = assert(function( div1 ) {
+		// Should return 1, but returns 4 (following)
+		return div1.compareDocumentPosition( doc.createElement("div") ) & 1;
+	});
 
 	// Document order sorting
 	sortOrder = docElem.compareDocumentPosition ?
@@ -680,7 +854,7 @@ setDocument = Sizzle.setDocument = function( node ) {
 			0;
 	};
 
-	return document;
+	return doc;
 };
 
 Sizzle.matches = function( expr, elements ) {
@@ -696,10 +870,9 @@ Sizzle.matchesSelector = function( elem, expr ) {
 	// Make sure that attribute selectors are quoted
 	expr = expr.replace( rattributeQuotes, "='$1']" );
 
-	// rbuggyQSA always contains :focus, so no need for an existence check
 	if ( support.matchesSelector && documentIsHTML &&
-		(!rbuggyMatches || !rbuggyMatches.test(expr)) &&
-		(!rbuggyQSA     || !rbuggyQSA.test(expr)) ) {
+		( !rbuggyMatches || !rbuggyMatches.test( expr ) ) &&
+		( !rbuggyQSA     || !rbuggyQSA.test( expr ) ) ) {
 
 		try {
 			var ret = matches.call( elem, expr );
@@ -732,7 +905,10 @@ Sizzle.attr = function( elem, name ) {
 	}
 
 	var fn = Expr.attrHandle[ name.toLowerCase() ],
-		val = fn && fn( elem, name, !documentIsHTML );
+		// Don't get fooled by Object.prototype properties (jQuery #13807)
+		val = ( fn && hasOwn.call( Expr.attrHandle, name.toLowerCase() ) ?
+			fn( elem, name, !documentIsHTML ) :
+			undefined );
 
 	return val === undefined ?
 		support.attributes || !documentIsHTML ?
@@ -747,7 +923,10 @@ Sizzle.error = function( msg ) {
 	throw new Error( "Syntax error, unrecognized expression: " + msg );
 };
 
-// Document sorting and removing duplicates
+/**
+ * Document sorting and removing duplicates
+ * @param {ArrayLike} results
+ */
 Sizzle.uniqueSort = function( results ) {
 	var elem,
 		duplicates = [],
@@ -772,87 +951,6 @@ Sizzle.uniqueSort = function( results ) {
 
 	return results;
 };
-
-/**
- * Checks document order of two siblings
- * @param {Element} a
- * @param {Element} b
- * @returns Returns -1 if a precedes b, 1 if a follows b
- */
-function siblingCheck( a, b ) {
-	var cur = b && a,
-		diff = cur && ( ~b.sourceIndex || MAX_NEGATIVE ) - ( ~a.sourceIndex || MAX_NEGATIVE );
-
-	// Use IE sourceIndex if available on both nodes
-	if ( diff ) {
-		return diff;
-	}
-
-	// Check if b follows a
-	if ( cur ) {
-		while ( (cur = cur.nextSibling) ) {
-			if ( cur === b ) {
-				return -1;
-			}
-		}
-	}
-
-	return a ? 1 : -1;
-}
-
-// Fetches boolean attributes by node
-function boolHandler( elem, name, isXML ) {
-	var val;
-	return isXML ?
-		undefined :
-		(val = elem.getAttributeNode( name )) && val.specified ?
-			val.value :
-			elem[ name ] === true ? name.toLowerCase() : null;
-}
-
-// Fetches attributes without interpolation
-// http://msdn.microsoft.com/en-us/library/ms536429%28VS.85%29.aspx
-function interpolationHandler( elem, name, isXML ) {
-	var val;
-	return isXML ?
-		undefined :
-		(val = elem.getAttribute( name, name.toLowerCase() === "type" ? 1 : 2 ));
-}
-
-// Returns a function to use in pseudos for input types
-function createInputPseudo( type ) {
-	return function( elem ) {
-		var name = elem.nodeName.toLowerCase();
-		return name === "input" && elem.type === type;
-	};
-}
-
-// Returns a function to use in pseudos for buttons
-function createButtonPseudo( type ) {
-	return function( elem ) {
-		var name = elem.nodeName.toLowerCase();
-		return (name === "input" || name === "button") && elem.type === type;
-	};
-}
-
-// Returns a function to use in pseudos for positionals
-function createPositionalPseudo( fn ) {
-	return markFunction(function( argument ) {
-		argument = +argument;
-		return markFunction(function( seed, matches ) {
-			var j,
-				matchIndexes = fn( [], seed.length, argument ),
-				i = matchIndexes.length;
-
-			// Match elements found at the specified indexes
-			while ( i-- ) {
-				if ( seed[ (j = matchIndexes[i]) ] ) {
-					seed[j] = !(matches[j] = seed[j]);
-				}
-			}
-		});
-	});
-}
 
 /**
  * Utility function for retrieving the text value of an array of DOM nodes
@@ -964,7 +1062,7 @@ Expr = Sizzle.selectors = {
 			}
 
 			// Accept quoted arguments as-is
-			if ( match[4] ) {
+			if ( match[3] && match[4] !== undefined ) {
 				match[2] = match[4];
 
 			// Strip excess characters from unquoted arguments
@@ -1392,11 +1490,11 @@ function tokenize( selector, parseOnly ) {
 		// Combinators
 		if ( (match = rcombinators.exec( soFar )) ) {
 			matched = match.shift();
-			tokens.push( {
+			tokens.push({
 				value: matched,
 				// Cast descendant combinators to space
 				type: match[0].replace( rtrim, " " )
-			} );
+			});
 			soFar = soFar.slice( matched.length );
 		}
 
@@ -1405,11 +1503,11 @@ function tokenize( selector, parseOnly ) {
 			if ( (match = matchExpr[ type ].exec( soFar )) && (!preFilters[ type ] ||
 				(match = preFilters[ type ]( match ))) ) {
 				matched = match.shift();
-				tokens.push( {
+				tokens.push({
 					value: matched,
 					type: type,
 					matches: match
-				} );
+				});
 				soFar = soFar.slice( matched.length );
 			}
 		}
@@ -1656,7 +1754,10 @@ function matcherFromTokens( tokens ) {
 				}
 				return setMatcher(
 					i > 1 && elementMatcher( matchers ),
-					i > 1 && toSelector( tokens.slice( 0, i - 1 ) ).replace( rtrim, "$1" ),
+					i > 1 && toSelector(
+						// If the preceding token was a descendant combinator, insert an implicit any-element `*`
+						tokens.slice( 0, i - 1 ).concat({ value: tokens[ i - 2 ].type === " " ? "*" : "" })
+					).replace( rtrim, "$1" ),
 					matcher,
 					i < j && matcherFromTokens( tokens.slice( i, j ) ),
 					j < len && matcherFromTokens( (tokens = tokens.slice( j )) ),
@@ -1818,14 +1919,13 @@ function select( selector, context, results, seed ) {
 			// Take a shortcut and set the context if the root selector is an ID
 			tokens = match[0] = match[0].slice( 0 );
 			if ( tokens.length > 2 && (token = tokens[0]).type === "ID" &&
-					context.nodeType === 9 && documentIsHTML &&
+					support.getById && context.nodeType === 9 && documentIsHTML &&
 					Expr.relative[ tokens[1].type ] ) {
 
 				context = ( Expr.find["ID"]( token.matches[0].replace(runescape, funescape), context ) || [] )[0];
 				if ( !context ) {
 					return results;
 				}
-
 				selector = selector.slice( tokens.shift().value.length );
 			}
 
@@ -1892,31 +1992,6 @@ setDocument();
 // Always assume duplicates if they aren't passed to the comparison function
 [0, 0].sort( sortOrder );
 support.detectDuplicates = hasDuplicate;
-
-// Support: IE<8
-// Prevent attribute/property "interpolation"
-assert(function( div ) {
-	div.innerHTML = "<a href='#'></a>";
-	if ( div.firstChild.getAttribute("href") !== "#" ) {
-		var attrs = "type|href|height|width".split("|"),
-			i = attrs.length;
-		while ( i-- ) {
-			Expr.attrHandle[ attrs[i] ] = interpolationHandler;
-		}
-	}
-});
-
-// Support: IE<9
-// Use getAttributeNode to fetch booleans when getAttribute lies
-assert(function( div ) {
-	if ( div.getAttribute("disabled") != null ) {
-		var attrs = booleans.split("|"),
-			i = attrs.length;
-		while ( i-- ) {
-			Expr.attrHandle[ attrs[i] ] = boolHandler;
-		}
-	}
-});
 
 // EXPOSE
 if ( typeof define === "function" && define.amd ) {
