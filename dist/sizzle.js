@@ -6,7 +6,7 @@
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2013-05-27
+ * Date: 2013-05-31
  */
 (function( window, undefined ) {
 
@@ -121,7 +121,7 @@ var i,
 	rnative = /^[^{]+\{\s*\[native \w/,
 
 	// Easily-parseable/retrievable ID or TAG or CLASS selectors
-	rquickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
+	rquickExpr = /^(?:#([\w\-]+)|(\w+)|\.([\w\-]+))$/,
 
 	rinputs = /^(?:input|select|textarea|button)$/i,
 	rheader = /^h\d$/i,
