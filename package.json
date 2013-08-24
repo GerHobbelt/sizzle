@@ -40,5 +40,8 @@
 		"sizzle",
 		"selector",
 		"jquery"
-	]
+	],
+	"scripts": {
+		"install": "bower install"
+	}
 }
