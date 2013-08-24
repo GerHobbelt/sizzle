@@ -6,7 +6,7 @@
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2013-07-03
+ * Date: 2013-08-24
  */
 (function( window, undefined ) {
 
