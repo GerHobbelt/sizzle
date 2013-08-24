@@ -1,8 +1,8 @@
 {
   "name": "sizzle",
-  "version": "1.10.4",
+  "version": "1.10.5",
   "main": "./dist/sizzle.js",
-  "dependencies": {
+  "devDependencies": {
     "qunit": "~1.11.0"
   },
   "ignore": [
@@ -11,7 +11,6 @@
     "bower.json",
     "speed",
     "Makefile",
-    "**/*.min.*",
     "*.md",
     "*.txt",
     "sizzle.js",
