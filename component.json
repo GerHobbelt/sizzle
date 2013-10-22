@@ -1,0 +1,11 @@
+{
+  "name": "sizzle",
+  "version": "1.10.12-pre",
+  "description": "A pure-JavaScript, bottom-up CSS selector engine designed to be easily dropped in to a host library.",
+  "version": "1.10.12-pre",
+  "repo": "cristiandouce/sizzle",
+  "keywords": [ "jquery", "css", "selector", "engine" ],
+  "dependencies": {},
+  "scripts": [ "dist/sizzle.js" ],
+  "main": "dist/sizzle.js"
+}
