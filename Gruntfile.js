@@ -1,5 +1,8 @@
 module.exports = function( grunt ) {
 
+	// Load dev dependencies
+	require( "load-grunt-tasks" )( grunt );
+
 	"use strict";
 
 	var gzip = require("gzip-js"),
@@ -13,10 +16,10 @@ module.exports = function( grunt ) {
 		qunit: {
 			files: [ "test/index.html" ]
 		},
-		build: {
+		compile: {
 			all: {
 				dest: "dist/sizzle.js",
-				src: "sizzle.js"
+				src: "src/sizzle.js"
 			}
 		},
 		version: {
@@ -50,7 +53,7 @@ module.exports = function( grunt ) {
 		},
 		jshint: {
 			source: {
-				src: [ "sizzle.js" ],
+				src: [ "src/sizzle.js" ],
 				options: {
 					jshintrc: ".jshintrc"
 				}
@@ -88,15 +91,16 @@ module.exports = function( grunt ) {
 				"<%= jshint.grunt.src %>",
 				"<%= jshint.speed.src %>",
 				"<%= jshint.tests.src %>",
-				"{package,bower}.json"
+				"{package,bower}.json",
+				"test/index.html"
 			],
 			tasks: "default"
 		}
 	});
 
 	grunt.registerMultiTask(
-		"build",
-		"Build sizzle.js to the dist directory. Embed date/version.",
+		"compile",
+		"Compile sizzle.js to the dist directory. Embed date/version.",
 		function() {
 			var data = this.data,
 				dest = data.dest,
@@ -175,27 +179,26 @@ module.exports = function( grunt ) {
 		}
 
 		var done = this.async(),
-			files = grunt.config("version.files"),
-			n = files.length,
+			files = grunt.config( "version.files" ),
 			rversion = /("version":\s*")[^"]+/;
 
+		// Update version in specified files
 		files.forEach(function( filename ) {
-			// Update version in specified files
 			var text = grunt.file.read( filename );
 			text = text.replace( rversion, "$1" + version );
 			grunt.file.write( filename, text );
-			exec( "git add " + filename, function( err, stdout, stderr ) {
-				if ( err ) {
-					fatal( err + " " + stderr );
-					return;
-				}
-				// Commit when all files are added
-				if ( !--n ) {
-					grunt.config( "pkg.version", version );
-					grunt.task.run([ "build", "uglify", "dist", "commit:\"Update version to " + version + "\"" ]);
-					done();
-				}
-			});
+		});
+
+		// Add files to git index
+		exec( "git add -A", function( err ) {
+			if ( err ) {
+				fatal( err );
+				return;
+			}
+			// Commit next pre version
+			grunt.config( "pkg.version", version );
+			grunt.task.run([ "build", "uglify", "dist", "commit:'Update version to " + version + "'" ]);
+			done();
 		});
 	});
 
@@ -207,35 +210,35 @@ module.exports = function( grunt ) {
 			fatal( "Next version should be a -pre version (x.x.x-pre): " + next );
 			return;
 		}
-		var version = grunt.config( "pkg.version" );
+		var done,
+			version = grunt.config( "pkg.version" );
 		if ( !rpreversion.test(version) ) {
 			fatal( "Existing version is not a pre version: " + version );
 			return;
 		}
 		version = version.replace( rpreversion, "$1" );
 
-		// Build to dist directories along with a map and tag the release
-		grunt.task.run([
-			// Commit new version
-			"version:" + version,
-			// Tag new version
-			"tag:" + version,
-			// Commit next version
-			"version:" + next
-		]);
+		done = this.async();
+		exec( "git diff --quiet HEAD", function( err ) {
+			if ( err ) {
+				fatal( "The working directory should be clean when releasing. Commit or stash changes." );
+				return;
+			}
+			// Build to dist directories along with a map and tag the release
+			grunt.task.run([
+				// Commit new version
+				"version:" + version,
+				// Tag new version
+				"tag:" + version,
+				// Commit next version
+				"version:" + next
+			]);
+			done();
+		});
 	});
 
-	// Load grunt tasks from NPM packages
-	grunt.loadNpmTasks("grunt-contrib-jshint");
-	grunt.loadNpmTasks("grunt-contrib-qunit");
-	grunt.loadNpmTasks("grunt-contrib-uglify");
-	grunt.loadNpmTasks("grunt-contrib-watch");
-	grunt.loadNpmTasks("grunt-compare-size");
-	grunt.loadNpmTasks("grunt-git-authors");
-	grunt.loadNpmTasks("grunt-jsonlint");
-
-	// Default task
-	grunt.registerTask( "default", [ "jsonlint", "jshint", "build", "uglify", "dist", "qunit", "compare_size" ] );
+	grunt.registerTask( "build", [ "jsonlint", "jshint", "compile", "uglify", "dist" ] );
+	grunt.registerTask( "default", [ "build", "qunit", "compare_size" ] );
 
 	// Task aliases
 	grunt.registerTask( "lint", ["jshint"] );

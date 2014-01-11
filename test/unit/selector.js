@@ -46,10 +46,10 @@ module("selector", { teardown: moduleTeardown });
 */
 
 test("element", function() {
-	expect( 38 );
+	expect( 39 );
 
 	var form, all, good, i, obj1, lengthtest,
-		siblingTest, iframe, iframeDoc, html;
+		siblingTest, siblingNext, iframe, iframeDoc, html;
 
 	equal( Sizzle("").length, 0, "Empty selector returns an empty array" );
 	deepEqual( Sizzle("div", document.createTextNode("")), [], "Text element as context fails silently" );
@@ -106,6 +106,11 @@ test("element", function() {
 	deepEqual( Sizzle("div em", siblingTest), [], "Element-rooted QSA does not select based on document context" );
 	deepEqual( Sizzle("div em, div em, div em:not(div em)", siblingTest), [], "Element-rooted QSA does not select based on document context" );
 	deepEqual( Sizzle("div em, em\\,", siblingTest), [], "Escaped commas do not get treated with an id in element-rooted QSA" );
+
+	siblingNext = document.getElementById("siblingnext");
+	document.createDocumentFragment().appendChild( siblingTest );
+	deepEqual( Sizzle( "em + :not(:has(*)):not(:empty), foo", siblingTest ), [ siblingNext ],
+		"Non-qSA path correctly sets detached context for sibling selectors (jQuery #14351)" );
 
 	iframe = document.getElementById("iframe"),
 		iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
@@ -311,7 +316,7 @@ test("class", function() {
 });
 
 test("name", function() {
-	expect( 13 );
+	expect( 14 );
 
 	var form;
 
@@ -337,6 +342,8 @@ test("name", function() {
 	t( "Find elements that have similar IDs", "[name=tName1]", ["tName1ID"] );
 	t( "Find elements that have similar IDs", "[name=tName2]", ["tName2ID"] );
 	t( "Find elements that have similar IDs", "#tName2ID", ["tName2ID"] );
+
+	t( "Case-sensitivity", "[name=tname1]", [] );
 });
 
 test("multiple", function() {
@@ -1081,31 +1088,47 @@ test("caching", function() {
 });
 
 asyncTest( "Iframe dispatch should not affect Sizzle, see jQuery #13936", 1, function() {
-	var i = 0,
+	var loaded = false,
 		thrown = false,
 		iframe = document.getElementById("iframe"),
 		iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
 
 	jQuery( iframe ).on( "load", function() {
-		var doc;
+		var form;
 
 		try {
-			i++;
-			doc = this.contentDocument || this.contentWindow.document;
-			Sizzle( "form", doc ).pop().submit();
-
+			iframeDoc = this.contentDocument || this.contentWindow.document;
+			form = Sizzle( "#navigate", iframeDoc )[ 0 ];
 		} catch ( e ) {
-			thrown = true;
+			thrown = e;
 		}
 
-		if ( i === 2 ) {
-			jQuery( this ).off("load");
-			ok( !thrown, "Iframe reload should not affect Sizzle, see jQuery #13936" );
+		if ( loaded ) {
+			strictEqual( thrown, false, "No error thrown from post-reload Sizzle call" );
 			start();
+		} else {
+			loaded = true;
+			form.submit();
 		}
 	});
 
 	iframeDoc.open();
-	iframeDoc.write("<body><form></form></body>");
+	iframeDoc.write("<body><form id='navigate'></form></body>");
 	iframeDoc.close();
+});
+
+test("matchesSelector", function() {
+	expect( 6 );
+
+	var el = document.getElementById("simon1"),
+		disconnected = document.createElement("div");
+
+	ok( Sizzle.matchesSelector( el, "[rel='bookmark']" ), "quoted attribute" );
+	ok( Sizzle.matchesSelector( el, "[rel=bookmark]" ), "unquoted attribute" );
+	ok( Sizzle.matchesSelector( el, "[\nrel = bookmark\t]" ), "unquoted attribute with non-semantic whitespace" );
+
+	ok( Sizzle.matchesSelector( disconnected, "div" ), "disconnected element" );
+
+	ok( Sizzle.matchesSelector( el, "* > *" ), "child combinator (matching)" );
+	ok( !Sizzle.matchesSelector( disconnected, "* > *" ), "child combinator (not matching)" );
 });

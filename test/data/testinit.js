@@ -15,6 +15,9 @@ var fireNative,
 		document.querySelectorAll = null;
 		document.documentElement.contains = null;
 		document.documentElement.compareDocumentPosition = null;
+		// Return array of length two to pass assertion
+		// But support should be false as its not native
+		document.getElementsByClassName = function() { return [ 0, 1 ]; };
 	}
 })();
 
@@ -106,5 +109,28 @@ fireNative = document.createEvent ?
 		var event = document.createEventObject();
 		node.fireEvent( "on" + type, event );
 	};
+
+function testIframeWithCallback( title, fileName, func ) {
+	test( title, function() {
+		var iframe;
+
+		stop();
+		window.iframeCallback = function() {
+			var self = this,
+				args = arguments;
+			setTimeout(function() {
+				window.iframeCallback = undefined;
+				iframe.remove();
+				func.apply( self, args );
+				func = function() {};
+				start();
+			}, 0 );
+		};
+		iframe = jQuery( "<div/>" ).css({ position: "absolute", width: "500px", left: "-600px" })
+			.append( jQuery( "<iframe/>" ).attr( "src", url( "./data/" + fileName ) ) )
+			.appendTo( "#qunit-fixture" );
+	});
+};
+window.iframeCallback = undefined;
 
 function moduleTeardown() {}
