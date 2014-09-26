@@ -446,8 +446,8 @@ test("attributes", function() {
 	t( "Attribute Equals Number", "#qunit-fixture li[tabIndex=-1]", ["foodWithNegativeTabIndex"] );
 
 	document.getElementById("anchor2").href = "#2";
-	t( "href Attribute", "p a[href^=#]", ["anchor2"] );
-	t( "href Attribute", "p a[href*=#]", ["simon1", "anchor2"] );
+	t( "href Attribute", "p a[href^='#']", ["anchor2"] );
+	t( "href Attribute", "p a[href*='#']", ["simon1", "anchor2"] );
 
 	t( "for Attribute", "form label[for]", ["label-for"] );
 	t( "for Attribute in form", "#form [for=action]", ["label-for"] );
@@ -726,7 +726,7 @@ test("pseudo - has", function() {
 });
 
 test("pseudo - misc", function() {
-	expect( 39 );
+	expect( 40 );
 
 	var select, tmp, input;
 
@@ -749,6 +749,8 @@ test("pseudo - misc", function() {
 	t( "Text Contains", "a:contains(Google Groups (Link))", ["groups"] );
 	t( "Text Contains", "a:contains((Link))", ["groups"] );
 
+	t( "Contains with CSS escapes", "span:contains(\"\\\"'\\53F0 \\5317 Ta\\301 ibe\\30C i\")",
+		["utf8class1"] );
 
 	tmp = document.createElement("div");
 	tmp.id = "tmp_input";
@@ -1103,7 +1105,7 @@ test("caching", function() {
 asyncTest( "Iframe dispatch should not affect Sizzle, see jQuery #13936", 1, function() {
 	var loaded = false,
 		thrown = false,
-		iframe = document.getElementById("iframe"),
+		iframe = document.getElementById( "iframe" ),
 		iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
 
 	jQuery( iframe ).on( "load", function() {
@@ -1126,7 +1128,7 @@ asyncTest( "Iframe dispatch should not affect Sizzle, see jQuery #13936", 1, fun
 	});
 
 	iframeDoc.open();
-	iframeDoc.write("<body><form id='navigate'></form></body>");
+	iframeDoc.write( "<body><form id='navigate' action='?'></form></body>" );
 	iframeDoc.close();
 });
 

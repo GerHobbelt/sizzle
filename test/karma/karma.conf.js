@@ -18,7 +18,7 @@ module.exports = function( config ) {
 		frameworks: [ "qunit" ],
 
 		files: [
-			"test/jquery.js",
+			"external/jquery/jquery.js",
 			"dist/sizzle.js",
 
 			// Base fixtures
@@ -71,7 +71,9 @@ module.exports = function( config ) {
 
 		// If browser does not capture in given timeout [ms], kill it
 		captureTimeout: 3e5,
-		browserNoActivityTimeout: 3e5
+		browserNoActivityTimeout: 3e5,
+		browserDisconnectTimeout: 3e5,
+		browserDisconnectTolerance: 3
 	});
 
 	// Deal with Travis environment
@@ -84,7 +86,7 @@ module.exports = function( config ) {
 		// You can't get access to secure environment variables from pull requests
 		// so we don't have browserstack from them, but travis has headless Firefox so use that
 		if ( !(process.env.BROWSER_STACK_USERNAME && process.env.BROWSER_STACK_ACCESS_KEY) &&
-		    process.env.TRAVIS_PULL_REQUEST ) {
+			process.env.TRAVIS_PULL_REQUEST ) {
 			config.browsers.push( "Firefox" );
 		}
 	}

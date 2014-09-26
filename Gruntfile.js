@@ -25,27 +25,35 @@ module.exports = function( grunt ) {
 		// See https://github.com/jquery/sizzle/wiki/Sizzle-Documentation#browsers
 
 		browsers.desktop = [
-			"bs_chrome-32", "bs_chrome-33",
+			"bs_chrome-34", "bs_chrome-35",
 
-			"bs_firefox-27", "bs_firefox-28",
+			"bs_firefox-17", "bs_firefox-24", // Firefox ESR
+			"bs_firefox-28", "bs_firefox-29",
 
 			"bs_ie-9", "bs_ie-10", "bs_ie-11",
 
-			"bs_opera-19", "bs_opera-20",
+			"bs_opera-20", "bs_opera-21",
 
-			"bs_safari-6.1", "bs_safari-7"
+			"bs_safari-6.0", "bs_safari-6.1", "bs_safari-7.0"
 		];
 
 		browsers.old = [
-			"bs_ie-6", "bs_ie-7", "bs_ie-8"
+			// Node.js 0.10 has the same v8 version as Chrome 24
+			"bs_chrome-14", "bs_chrome-24",
+
+			"bs_firefox-3.6",
+
+			"bs_ie-6", "bs_ie-7", "bs_ie-8",
 
 			// Opera 12.16 temporary unavailable on BS through Karma launcher
-			//,"bs_opera-12.16"
+			//,"bs_opera-12.16",
+
+			"bs_safari-4.0", "bs_safari-5.0", "bs_safari-5.1"
 		];
 
-		browsers.ios = [ "bs_ios-6", "bs_ios-7" ];
+		browsers.ios = [ "bs_ios-5.1", "bs_ios-6.0", "bs_ios-7.0" ];
 		browsers.oldAndroid = [ "bs_android-2.3" ];
-		browsers.newAndroid = [ "bs_android-4.1" ];
+		browsers.newAndroid = [ "bs_android-4.0", "bs_android-4.1", "bs_android-4.2" ];
 	}
 
 	// Project configuration.
@@ -90,49 +98,45 @@ module.exports = function( grunt ) {
 			}
 		},
 		bowercopy: {
-			options: {
-				clean: true
-			},
-
-			speed: {
+			all: {
 				options: {
-					destPrefix: "speed/libs"
+					clean: true,
+					destPrefix: "external"
 				},
 
 				files: {
-					"requirejs/require.js": "requirejs/require.js",
-					"requirejs-domready/domReady.js": "requirejs-domready/domReady.js",
-					"requirejs-text/text.js": "requirejs-text/text.js",
-					"benchmark/benchmark.js": "benchmark/benchmark.js"
-				}
-			},
+					"benchmark/benchmark.js": "benchmark/benchmark.js",
+					"benchmark/LICENSE.txt": "benchmark/LICENSE.txt",
 
-			"test/libs/qunit": "qunit/qunit"
+					"jquery/jquery.js": "jquery/jquery.js",
+					"jquery/MIT-LICENSE.txt": "jquery/MIT-LICENSE.txt",
+
+					"jquery-1.7.2/jquery.js": "jquery-1.7.2/jquery.js",
+					"jquery-1.7.2/MIT-LICENSE.txt": "jquery-1.7.2/MIT-LICENSE.txt",
+
+					"jquery-1.8.3/jquery.js": "jquery-1.8.3/jquery.js",
+					"jquery-1.8.3/MIT-LICENSE.txt": "jquery-1.8.3/MIT-LICENSE.txt",
+
+					"qunit/qunit.js": "qunit/qunit/qunit.js",
+					"qunit/qunit.css": "qunit/qunit/qunit.css",
+					"qunit/MIT-LICENSE.txt": "qunit/MIT-LICENSE.txt",
+
+					"requirejs/require.js": "requirejs/require.js",
+
+					"requirejs-domready/domReady.js": "requirejs-domready/domReady.js",
+					"requirejs-domready/LICENSE.txt": "requirejs-domready/LICENSE",
+
+					"requirejs-text/text.js": "requirejs-text/text.js",
+					"requirejs-text/LICENSE.txt": "requirejs-text/LICENSE"
+				}
+			}
 		},
 		jshint: {
-			source: {
-				src: files.source,
-				options: {
-					jshintrc: "src/.jshintrc"
-				}
+			options: {
+				jshintrc: true
 			},
-			build: {
-				src: [ files.grunt, files.karma ],
-				options: {
-					jshintrc: ".jshintrc"
-				}
-			},
-			speed: {
-				src: files.speed,
-				options: {
-					jshintrc: "speed/.jshintrc"
-				}
-			},
-			tests: {
-				src: files.tests,
-				options: {
-					jshintrc: "test/.jshintrc"
-				}
+			all: {
+				src: [ files.source, files.grunt, files.karma, files.speed, files.tests ]
 			}
 		},
 		jscs: {
@@ -222,11 +226,11 @@ module.exports = function( grunt ) {
 	// Execute tests all browsers in sequential way,
 	// so slow connections would not affect other runs
 	grunt.registerTask( "tests", isBrowserStack ? [
-	    "karma:phantom", "karma:desktop", "karma:old",
-	    "karma:ios", "karma:newAndroid", "karma:oldAndroid"
+		"karma:phantom", "karma:desktop", "karma:old",
+		"karma:ios", "karma:newAndroid", "karma:oldAndroid"
 	] : "karma:phantom" );
 
-	grunt.registerTask( "build", [ "lint", "tests", "compile", "uglify", "dist" ] );
+	grunt.registerTask( "build", [ "lint", "compile", "uglify", "tests", "dist" ] );
 	grunt.registerTask( "default", [ "build", "compare_size" ] );
 
 	grunt.registerTask( "bower", "bowercopy" );
