@@ -6,10 +6,16 @@ module.exports = function( grunt ) {
 		browsers = {
 			phantom: [ "PhantomJS" ],
 			desktop: [],
-			old: [],
+			android: [],
 			ios: [],
-			oldAndroid: [],
-			newAndroid: []
+			old: {
+				firefox: [],
+				chrome: [],
+				safari: [],
+				ie: [],
+				opera: [],
+				android: []
+			}
 		},
 		files = {
 			source: "src/sizzle.js",
@@ -25,40 +31,35 @@ module.exports = function( grunt ) {
 		// See https://github.com/jquery/sizzle/wiki/Sizzle-Documentation#browsers
 
 		browsers.desktop = [
-			"bs_chrome-34", "bs_chrome-35",
+			"bs_chrome-36", "bs_chrome-37",
 
 			"bs_firefox-17", "bs_firefox-24", // Firefox ESR
-			"bs_firefox-28", "bs_firefox-29",
+			"bs_firefox-31", "bs_firefox-32",
 
 			"bs_ie-9", "bs_ie-10", "bs_ie-11",
 
-			"bs_opera-20", "bs_opera-21",
+			"bs_opera-23", "bs_opera-24",
 
 			"bs_safari-6.0", "bs_safari-6.1", "bs_safari-7.0"
 		];
 
-		browsers.old = [
-			// Node.js 0.10 has the same v8 version as Chrome 24
-			"bs_chrome-14", "bs_chrome-24",
-
-			"bs_firefox-3.6",
-
-			"bs_ie-6", "bs_ie-7", "bs_ie-8",
-
-			// Opera 12.16 temporary unavailable on BS through Karma launcher
-			//,"bs_opera-12.16",
-
-			"bs_safari-4.0", "bs_safari-5.0", "bs_safari-5.1"
-		];
-
 		browsers.ios = [ "bs_ios-5.1", "bs_ios-6.0", "bs_ios-7.0" ];
-		browsers.oldAndroid = [ "bs_android-2.3" ];
-		browsers.newAndroid = [ "bs_android-4.0", "bs_android-4.1", "bs_android-4.2" ];
+		browsers.android = [ "bs_android-4.0", "bs_android-4.1", "bs_android-4.2" ];
+
+		browsers.old = {
+			firefox: [ "bs_firefox-3.6" ],
+			chrome: [ "bs_chrome-14", "bs_chrome-24" ],
+			safari: [ "bs_safari-4.0", "bs_safari-5.0", "bs_safari-5.1" ],
+			ie: [ "bs_ie-6", "bs_ie-7", "bs_ie-8" ],
+			opera: [ "bs_opera-11.6", "bs_opera-12.16" ],
+			android: [ "bs_android-2.3" ]
+		};
 	}
 
-	// Project configuration.
+	// Project configuration
 	grunt.initConfig({
 		pkg: grunt.file.readJSON( "package.json" ),
+		dateString: new Date().toISOString().replace( /\..*Z/, "" ),
 		compile: {
 			all: {
 				dest: "dist/sizzle.js",
@@ -75,18 +76,20 @@ module.exports = function( grunt ) {
 				},
 				options: {
 					compress: {
-						hoist_funs: false,
+						"hoist_funs": false,
 						loops: false
 					},
-					banner: "/*! Sizzle v<%= pkg.version %> | (c) 2008, 2014 jQuery Foundation, Inc. | jquery.org/license */",
-					sourceMap: "dist/sizzle.min.map",
+					banner: "/*! Sizzle v<%= pkg.version %> | (c) 2008, 2014 " +
+						"jQuery Foundation, Inc. | jquery.org/license */",
+					sourceMap: true,
+					sourceMapName: "dist/sizzle.min.map",
 					beautify: {
-						ascii_only: true
+						"ascii_only": true
 					}
 				}
 			}
 		},
-		compare_size: {
+		"compare_size": {
 			files: [ "dist/sizzle.js", "dist/sizzle.min.js" ],
 			options: {
 				compress: {
@@ -97,13 +100,11 @@ module.exports = function( grunt ) {
 				cache: "dist/.sizecache.json"
 			}
 		},
-		bowercopy: {
+		npmcopy: {
 			all: {
 				options: {
-					clean: true,
 					destPrefix: "external"
 				},
-
 				files: {
 					"benchmark/benchmark.js": "benchmark/benchmark.js",
 					"benchmark/LICENSE.txt": "benchmark/LICENSE.txt",
@@ -111,23 +112,17 @@ module.exports = function( grunt ) {
 					"jquery/jquery.js": "jquery/jquery.js",
 					"jquery/MIT-LICENSE.txt": "jquery/MIT-LICENSE.txt",
 
-					"jquery-1.7.2/jquery.js": "jquery-1.7.2/jquery.js",
-					"jquery-1.7.2/MIT-LICENSE.txt": "jquery-1.7.2/MIT-LICENSE.txt",
-
-					"jquery-1.8.3/jquery.js": "jquery-1.8.3/jquery.js",
-					"jquery-1.8.3/MIT-LICENSE.txt": "jquery-1.8.3/MIT-LICENSE.txt",
-
-					"qunit/qunit.js": "qunit/qunit/qunit.js",
-					"qunit/qunit.css": "qunit/qunit/qunit.css",
-					"qunit/MIT-LICENSE.txt": "qunit/MIT-LICENSE.txt",
+					"qunit/qunit.js": "qunitjs/qunit/qunit.js",
+					"qunit/qunit.css": "qunitjs/qunit/qunit.css",
+					"qunit/MIT-LICENSE.txt": "qunitjs/MIT-LICENSE.txt",
 
 					"requirejs/require.js": "requirejs/require.js",
 
-					"requirejs-domready/domReady.js": "requirejs-domready/domReady.js",
-					"requirejs-domready/LICENSE.txt": "requirejs-domready/LICENSE",
+					"requirejs-domready/domReady.js": "domReady/domReady.js",
+					"requirejs-domready/LICENSE.txt": "domReady/LICENSE",
 
-					"requirejs-text/text.js": "requirejs-text/text.js",
-					"requirejs-text/LICENSE.txt": "requirejs-text/LICENSE"
+					"requirejs-text/text.js": "text/text.js",
+					"requirejs-text/LICENSE.txt": "text/LICENSE"
 				}
 			}
 		},
@@ -140,12 +135,20 @@ module.exports = function( grunt ) {
 			}
 		},
 		jscs: {
-			src: [
-				files.source,
-				files.grunt,
-				files.speed,
-				files.karma
-			]
+			src: {
+				options: {
+					requireDotNotation: null
+				},
+				src: [ files.source ]
+			},
+			grunt: [ files.grunt ],
+			speed: [ files.speed ],
+			karma: {
+				options: {
+					requireCamelCaseOrUpperCaseIdentifiers: null
+				},
+				src: [ files.karma ]
+			}
 		},
 		jsonlint: {
 			pkg: {
@@ -171,31 +174,48 @@ module.exports = function( grunt ) {
 			desktop: {
 				browsers: browsers.desktop
 			},
-			old: {
-				browsers: browsers.old,
-
-				// Support: IE6
-				// Have to re-arrange socket.io transports by prioritizing "jsonp-polling"
-				// otherwise IE6 can't connect to karma server
-				transports: [ "jsonp-polling" ],
+			android: {
+				browsers: browsers.android
 			},
 			ios: {
 				browsers: browsers.ios
 			},
-			oldAndroid: {
-				browsers: browsers.oldAndroid,
+			oldIe: {
+				browsers: browsers.old.ie,
+
+				// Support: IE6
+				// Have to re-arrange socket.io transports by prioritizing "jsonp-polling"
+				// otherwise IE6 can't connect to karma server
 				transports: [ "jsonp-polling" ]
 			},
-			newAndroid: {
-				browsers: browsers.newAndroid
+			oldOpera: {
+				browsers: browsers.old.opera
+			},
+			oldFirefox: {
+				browsers: browsers.old.firefox
+			},
+			oldChrome: {
+				browsers: browsers.old.chrome
+			},
+			oldSafari: {
+				browsers: browsers.old.safari
+			},
+			oldAndroid: {
+				browsers: browsers.old.android
 			},
 			all: {
 				browsers: browsers.phantom.concat(
 					browsers.desktop,
-					browsers.old,
 					browsers.ios,
-					browsers.newAndroid,
-					browsers.oldAndroid
+					browsers.android,
+
+					browsers.old.firefox,
+					browsers.old.chrome,
+					browsers.old.safari,
+					browsers.old.ie,
+					browsers.old.opera,
+
+					browsers.old.android
 				)
 			}
 		},
@@ -203,12 +223,11 @@ module.exports = function( grunt ) {
 			files: [
 				files.source,
 				files.grunt,
-				files.speed,
 				files.karma,
+				files.speed,
 				"test/**/*",
-				"<%= jshint.tests.src %>",
-				"{package,bower}.json",
-				"test/*.html"
+				"test/*.html",
+				"{package,bower}.json"
 			],
 			tasks: [ "lint", "karma:watch:run" ]
 		}
@@ -226,8 +245,14 @@ module.exports = function( grunt ) {
 	// Execute tests all browsers in sequential way,
 	// so slow connections would not affect other runs
 	grunt.registerTask( "tests", isBrowserStack ? [
-		"karma:phantom", "karma:desktop", "karma:old",
-		"karma:ios", "karma:newAndroid", "karma:oldAndroid"
+		"karma:phantom", "karma:desktop",
+
+		"karma:ios", "karma:android",
+
+		"karma:oldIe", "karma:oldFirefox", "karma:oldChrome",
+		"karma:oldSafari", "karma:oldOpera",
+
+		"karma:oldAndroid"
 	] : "karma:phantom" );
 
 	grunt.registerTask( "build", [ "lint", "compile", "uglify", "tests", "dist" ] );

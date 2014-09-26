@@ -22,17 +22,17 @@ module.exports = {
 		os: "OS X",
 		os_version: "Mavericks"
 	},
-	"bs_firefox-28": {
+	"bs_firefox-31": {
 		base: "BrowserStack",
 		browser: "firefox",
-		browser_version: "28.0",
+		browser_version: "31.0",
 		os: "OS X",
 		os_version: "Mavericks"
 	},
-	"bs_firefox-29": {
+	"bs_firefox-32": {
 		base: "BrowserStack",
 		browser: "firefox",
-		browser_version: "29.0",
+		browser_version: "32.0",
 		os: "OS X",
 		os_version: "Mavericks"
 	},
@@ -51,17 +51,17 @@ module.exports = {
 		os: "OS X",
 		os_version: "Mavericks"
 	},
-	"bs_chrome-34": {
+	"bs_chrome-36": {
 		base: "BrowserStack",
 		browser: "chrome",
-		browser_version: "34.0",
+		browser_version: "36.0",
 		os: "OS X",
 		os_version: "Mavericks"
 	},
-	"bs_chrome-35": {
+	"bs_chrome-37": {
 		base: "BrowserStack",
 		browser: "chrome",
-		browser_version: "35.0",
+		browser_version: "37.0",
 		os: "OS X",
 		os_version: "Mavericks"
 	},
@@ -109,24 +109,31 @@ module.exports = {
 		os_version: "8.1"
 	},
 
+	"bs_opera-11.6": {
+		base: "BrowserStack",
+		browser: "opera",
+		browser_version: "11.6",
+		os: "Windows",
+		os_version: "7"
+	},
 	"bs_opera-12.16": {
 		base: "BrowserStack",
 		browser: "opera",
 		browser_version: "12.16",
 		os: "Windows",
-		os_version: "8.1"
+		os_version: "7"
 	},
-	"bs_opera-20": {
+	"bs_opera-23": {
 		base: "BrowserStack",
 		browser: "opera",
-		browser_version: "20.0",
+		browser_version: "23.0",
 		os: "OS X",
 		os_version: "Mavericks"
 	},
-	"bs_opera-21": {
+	"bs_opera-24": {
 		base: "BrowserStack",
 		browser: "opera",
-		browser_version: "21.0",
+		browser_version: "24.0",
 		os: "OS X",
 		os_version: "Mavericks"
 	},
