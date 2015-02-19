@@ -1,6 +1,6 @@
 {
   "name": "sizzle",
-  "version": "2.1.1-component",
+  "version": "100.0.0",
   "description": "A pure-JavaScript, bottom-up CSS selector engine designed to be easily dropped in to a host library.",
   "repo": "cristiandouce/sizzle",
   "keywords": [ "jquery", "css", "selector", "engine" ],
