@@ -31,19 +31,22 @@ module.exports = function( grunt ) {
 		// See https://github.com/jquery/sizzle/wiki/Sizzle-Documentation#browsers
 
 		browsers.desktop = [
-			"bs_chrome-37", "bs_chrome-38",
+			"bs_chrome-50", "bs_chrome-51",
 
-			"bs_firefox-24", "bs_firefox-31", // Firefox ESR
-			"bs_firefox-32", "bs_firefox-33",
+			"bs_firefox-38", "bs_firefox-45", // Firefox ESR
+			"bs_firefox-46", "bs_firefox-47",
+
+			"bs_edge-13",
 
 			"bs_ie-9", "bs_ie-10", "bs_ie-11",
 
-			"bs_opera-24", "bs_opera-25",
+			"bs_opera-37", "bs_opera-38",
 
-			"bs_safari-6.0", "bs_safari-6.1", "bs_safari-7.0"
+			// Real Safari 6.1 and 7.0 are not available
+			"bs_safari-6.0", "bs_safari-8.0", "bs_safari-9.1"
 		];
 
-		browsers.ios = [ "bs_ios-5.1", "bs_ios-6.0", "bs_ios-7.0" ];
+		browsers.ios = [ "bs_ios-5.1", "bs_ios-6.0", "bs_ios-7.0", "bs_ios-8.3", "bs_ios-9.3" ];
 		browsers.android = [
 			"bs_android-4.0", "bs_android-4.1", "bs_android-4.2",
 			"bs_android-4.3", "bs_android-4.4"
@@ -51,9 +54,9 @@ module.exports = function( grunt ) {
 
 		browsers.old = {
 			firefox: [ "bs_firefox-3.6" ],
-			chrome: [ "bs_chrome-14", "bs_chrome-24" ],
+			chrome: [ "bs_chrome-16", "bs_chrome-24" ],
 			safari: [ "bs_safari-4.0", "bs_safari-5.0", "bs_safari-5.1" ],
-			ie: [ "bs_ie-6", "bs_ie-7", "bs_ie-8" ],
+			ie: [ "bs_ie-7", "bs_ie-8" ],
 			opera: [ "bs_opera-11.6", "bs_opera-12.16" ],
 			android: [ "bs_android-2.3" ]
 		};
@@ -82,15 +85,16 @@ module.exports = function( grunt ) {
 						"hoist_funs": false,
 						loops: false
 					},
-					banner: "/*! Sizzle v<%= pkg.version %> | (c) 2008, 2014 " +
+					banner: "/*! Sizzle v<%= pkg.version %> | (c) " +
 						"jQuery Foundation, Inc. | jquery.org/license */",
 					sourceMap: true,
 					sourceMapName: "dist/sizzle.min.map",
-					beautify: {
-						"ascii_only": true
-					}
+					ASCIIOnly: true
 				}
 			}
+		},
+		"ensure_ascii": {
+			files: [ "dist/*.js" ]
 		},
 		"compare_size": {
 			files: [ "dist/sizzle.js", "dist/sizzle.min.js" ],
@@ -117,15 +121,9 @@ module.exports = function( grunt ) {
 
 					"qunit/qunit.js": "qunitjs/qunit/qunit.js",
 					"qunit/qunit.css": "qunitjs/qunit/qunit.css",
-					"qunit/MIT-LICENSE.txt": "qunitjs/MIT-LICENSE.txt",
+					"qunit/LICENSE.txt": "qunitjs/LICENSE.txt",
 
-					"requirejs/require.js": "requirejs/require.js",
-
-					"requirejs-domready/domReady.js": "domReady/domReady.js",
-					"requirejs-domready/LICENSE.txt": "domReady/LICENSE",
-
-					"requirejs-text/text.js": "text/text.js",
-					"requirejs-text/LICENSE.txt": "text/LICENSE"
+					"requirejs/require.js": "requirejs/require.js"
 				}
 			}
 		},
@@ -192,10 +190,10 @@ module.exports = function( grunt ) {
 			oldIe: {
 				browsers: browsers.old.ie,
 
-				// Support: IE6
-				// Have to re-arrange socket.io transports by prioritizing "jsonp-polling"
-				// otherwise IE6 can't connect to karma server
-				transports: [ "jsonp-polling" ]
+				// Support: IE <=8 only
+				// Force use of JSONP polling
+				transports: [ "polling" ],
+				forceJSONP: true
 			},
 			oldOpera: {
 				browsers: browsers.old.opera
@@ -229,6 +227,9 @@ module.exports = function( grunt ) {
 			}
 		},
 		watch: {
+			options: {
+				livereload: true
+			},
 			files: [
 				files.source,
 				files.grunt,
@@ -238,7 +239,7 @@ module.exports = function( grunt ) {
 				"test/*.html",
 				"{package,bower}.json"
 			],
-			tasks: [ "lint", "karma:watch:run" ]
+			tasks: [ "build", "karma:watch:run" ]
 		}
 	});
 
@@ -256,15 +257,16 @@ module.exports = function( grunt ) {
 	grunt.registerTask( "tests", isBrowserStack ? [
 		"karma:phantom", "karma:desktop",
 
-		"karma:ios", "karma:android",
+		"karma:ios",
 
 		"karma:oldIe", "karma:oldFirefox", "karma:oldChrome",
-		"karma:oldSafari", "karma:oldOpera",
+		"karma:oldSafari", "karma:oldOpera"
 
-		"karma:oldAndroid"
+		// See #314 :-(
+		// "karma:android", "karma:oldAndroid"
 	] : "karma:phantom" );
 
-	grunt.registerTask( "build", [ "lint", "compile", "uglify", "dist" ] );
+	grunt.registerTask( "build", [ "lint", "compile", "uglify", "dist", "ensure_ascii" ] );
 	grunt.registerTask( "default", [ "build", "tests", "compare_size" ] );
 
 	grunt.registerTask( "bower", "bowercopy" );

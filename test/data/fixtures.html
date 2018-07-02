@@ -1,5 +1,4 @@
-<dl id="dl" style="position:absolute;top:-32767px;left:-32767px;width:1px">
-<div id="qunit-fixture">
+<div id="qunit-fixture" style="position:absolute;top:-32767px;left:-32767px;width:1px">
 	<p id="firstp">See <a id="simon1" href="http://simon.incutio.com/archive/2003/03/25/#getElementsBySelector" rel="bookmark">this blog entry</a> for more information.</p>
 	<p id="ap">
 		Here are some [links] in a normal paragraph: <a id="google" href="http://www.google.com/" title="Google!">Google</a>,
@@ -80,11 +79,11 @@
 			<param name="p2" value="x2" />
 		</object>
 
-		<span id="台北Táiběi"></span>
+		<span id="台北Táiběi"><span id="台北Táiběi-child"></span></span>
 		<span id="台北" lang="中文"></span>
 		<span id="utf8class1" class="台北Táiběi 台北">"'台北Táiběi"'</span>
 		<span id="utf8class2" class="台北"></span>
-		<span id="foo:bar" class="foo:bar"><span id="foo_descendent"></span></span>
+		<span id="foo:bar" class="foo:bar"><span id="foo_descendant"></span></span>
 		<span id="test.foo[5]bar" class="test.foo[5]bar"></span>
 
 		<foo_bar id="foobar">test element</foo_bar>
@@ -213,6 +212,7 @@ Z</textarea>
 
 	<form id="disabled-tests">
 		<fieldset id="disabled-fieldset" disabled="disabled">
+			<a id="disabled-fieldset-a" href="#"></a>
 			<input id="disabled-fieldset-input" name="disabled-fieldset-input" type="text" />
 			<textarea id="disabled-fieldset-textarea" name="disabled-fieldset-textarea" ></textarea>
 			<button id="disabled-fieldset-button" name="disabled-fieldset-button">Go</button>
@@ -222,6 +222,7 @@ Z</textarea>
 			<span id="disabled-fieldset-span">Neither enabled nor disabled</span>
 		</fieldset>
 		<fieldset id="enabled-fieldset">
+			<a id="disabled-a" href="#" disabled="disabled"></a>
 			<input id="disabled-input" name="disabled-input" type="text" disabled="disabled"/>
 			<textarea id="disabled-textarea" name="disabled-textarea" disabled="disabled"></textarea>
 			<button id="disabled-button" name="disabled-button" disabled="disabled">Go</button>
@@ -270,4 +271,3 @@ Z</textarea>
 	</div>​
 	<br id="last"/>
 </div>
-</dl>

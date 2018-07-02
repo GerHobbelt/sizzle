@@ -10,7 +10,10 @@ module.exports = function( config ) {
 		browserStack: {
 			project: "sizzle",
 			build: "local run" + (dateString ? ", " + dateString : ""),
-			timeout: 600 // 10 min
+			timeout: 600, // 10 min
+			// BrowserStack has a limit of 120 requests per minute. The default
+			// "request per second" strategy doesn't scale to so many browsers.
+			pollingTimeout: 10000
 		},
 
 		// Can't specify path as "../../test" which would be intuitive
@@ -23,6 +26,7 @@ module.exports = function( config ) {
 		files: [
 			"external/jquery/jquery.js",
 			"dist/sizzle.js",
+			"test/data/testingPseudos.js",
 
 			// Base fixtures
 			{
@@ -43,14 +47,20 @@ module.exports = function( config ) {
 				pattern: "test/data/mixed_sort.html",
 				watched: false,
 				included: false
+			},
+			{
+				pattern: "test/data/noConflict.html",
+				watched: false,
+				included: false
 			}
 		],
 
 		preprocessors: {
 
-			// mixed_sort.html downloaded through iframe inclusion
+			// mixed_sort.html, noConflict.html downloaded through iframe inclusion
 			// so it should not be preprocessed
 			"test/data/mixed_sort.html": [],
+			"test/data/noConflict.html": [],
 			"test/data/fixtures.html": [ "html2js" ]
 		},
 

@@ -2,16 +2,15 @@
   "name": "@gerhobbelt/sizzle",
   "title": "Sizzle",
   "description": "A pure-JavaScript, bottom-up CSS selector engine designed to be easily dropped in to a host library.",
-  "version": "2.2.0-2",
-  "homepage": "http://sizzlejs.com",
-  "main": "dist/sizzle.js",
-  "files": [
-    "AUTHORS.txt",
-    "LICENSE.txt",
-    "dist/sizzle.js",
-    "dist/sizzle.min.js",
-    "dist/sizzle.min.map"
+  "version": "2.3.3-3",
+  "keywords": [
+    "sizzle",
+    "javascript",
+    "CSS",
+    "selector",
+    "jquery"
   ],
+  "homepage": "https://sizzlejs.com",
   "author": {
     "name": "jQuery Foundation and other contributors",
     "url": "https://github.com/jquery/sizzle/blob/master/AUTHORS.txt"
@@ -23,17 +22,19 @@
   "bugs": {
     "url": "https://github.com/jquery/sizzle/issues"
   },
-  "licenses": [
-    {
-      "type": "MIT",
-      "url": "https://github.com/jquery/sizzle/blob/master/LICENSE.txt"
-    }
+  "license": "MIT",
+  "files": [
+    "AUTHORS.txt",
+    "LICENSE.txt",
+    "dist/sizzle.js",
+    "dist/sizzle.min.js",
+    "dist/sizzle.min.map"
   ],
+  "main": "dist/sizzle.js",
   "dependencies": {},
   "devDependencies": {
     "benchmark": "2.1.4",
     "commitplease": "3.2.0",
-    "domReady": "git://github.com/requirejs/domReady.git",
     "grunt": "1.0.3",
     "grunt-cli": "1.2.0",
     "grunt-compare-size": "0.4.2",
@@ -46,7 +47,6 @@
     "grunt-jsonlint": "1.1.0",
     "grunt-karma": "2.0.0",
     "grunt-npmcopy": "0.1.0",
-    "load-grunt-tasks": "4.0.0",
     "gzip-js": "0.3.2",
     "jquery": "3.3.1",
     "karma": "2.0.4",
@@ -56,9 +56,10 @@
     "karma-html2js-preprocessor": "1.1.0",
     "karma-phantomjs-launcher": "1.0.4",
     "karma-qunit": "2.1.0",
+    "load-grunt-tasks": "4.0.0",
+    "phantomjs-prebuilt": "2.1.16",
     "qunitjs": "2.4.1",
-    "requirejs": "2.3.5",
-    "text": "git://github.com/requirejs/text.git"
+    "requirejs": "2.3.5"
   },
   "scripts": {
     "build": "grunt",
@@ -66,11 +67,18 @@
     "test": "grunt test",
     "pub": "npm publish --access public"
   },
-  "keywords": [
-    "sizzle",
-    "javascript",
-    "CSS",
-    "selector",
-    "jquery"
-  ]
+  "commitplease": {
+    "components": [
+      "Misc",
+      "Docs",
+      "Tests",
+      "Build",
+      "Release",
+      "Core",
+      "Tokenize",
+      "Compile",
+      "Selector",
+      "SetDocument"
+    ]
+  }
 }
