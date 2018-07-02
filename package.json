@@ -1,8 +1,8 @@
 {
   "name": "@gerhobbelt/sizzle",
   "title": "Sizzle",
+  "version": "2.3.4-4",
   "description": "A pure-JavaScript, bottom-up CSS selector engine designed to be easily dropped in to a host library.",
-  "version": "2.3.3-4",
   "keywords": [
     "sizzle",
     "javascript",
@@ -12,7 +12,7 @@
   ],
   "homepage": "https://sizzlejs.com",
   "author": {
-    "name": "jQuery Foundation and other contributors",
+    "name": "JS Foundation and other contributors",
     "url": "https://github.com/jquery/sizzle/blob/master/AUTHORS.txt"
   },
   "repository": {
